@@ -9,6 +9,8 @@ int main(int, char *[])
 
   vrep.startSimulation();
 
+  std::vector<std::string> sensors = {"RightFootForceSensor"};
+
   float dir = 0.01f;
   float j7 = vrep.getJointPosition("RARM_JOINT7");
   for(unsigned int i = 0; i < 200*20; ++i)
@@ -19,6 +21,7 @@ int main(int, char *[])
     }
     j7 += dir;
     vrep.setJointTargetPosition("RARM_JOINT7", j7);
+    vrep.readForceSensors(sensors);
     vrep.nextSimulationStep();
   }
 
