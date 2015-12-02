@@ -24,6 +24,7 @@ set(mc_vrep_src
 
 add_executable(mc_vrep ${mc_vrep_src})
 target_link_libraries(mc_vrep vrep_remote_api pthread)
+pkg_config_use_dependency(mc_vrep mc_rtc)
 
 install(TARGETS vrep_remote_api mc_vrep
   RUNTIME DESTINATION bin

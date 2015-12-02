@@ -8,44 +8,203 @@ extern "C"
   #pragma GCC diagnostic pop
 }
 
+#include <mc_rtc/logging.h>
+
+#include <array>
 #include <iostream>
 #include <map>
 
+static const std::vector<std::string> REF_JOINT_ORDER = {
+  "RLEG_JOINT0", "RLEG_JOINT1", "RLEG_JOINT2", "RLEG_JOINT3", "RLEG_JOINT4", "RLEG_JOINT5",
+  "LLEG_JOINT0", "LLEG_JOINT1", "LLEG_JOINT2", "LLEG_JOINT3", "LLEG_JOINT4", "LLEG_JOINT5",
+  "CHEST_JOINT0", "CHEST_JOINT1", "HEAD_JOINT0", "HEAD_JOINT1",
+  "RARM_JOINT0", "RARM_JOINT1", "RARM_JOINT2", "RARM_JOINT3", "RARM_JOINT4", "RARM_JOINT5", "RARM_JOINT6", "RARM_JOINT7",
+  "LARM_JOINT0", "LARM_JOINT1", "LARM_JOINT2", "LARM_JOINT3", "LARM_JOINT4", "LARM_JOINT5", "LARM_JOINT6", "LARM_JOINT7",
+  "RHAND_JOINT0", "RHAND_JOINT1", "RHAND_JOINT2", "RHAND_JOINT3", "RHAND_JOINT4",
+  "LHAND_JOINT0", "LHAND_JOINT1", "LHAND_JOINT2", "LHAND_JOINT3", "LHAND_JOINT4"};
+
+static const std::vector<std::string> MAIN_JOINTS = {
+  "RLEG_JOINT0", "RLEG_JOINT1", "RLEG_JOINT2", "RLEG_JOINT3", "RLEG_JOINT4", "RLEG_JOINT5",
+  "LLEG_JOINT0", "LLEG_JOINT1", "LLEG_JOINT2", "LLEG_JOINT3", "LLEG_JOINT4", "LLEG_JOINT5",
+  "CHEST_JOINT0", "CHEST_JOINT1", "HEAD_JOINT0", "HEAD_JOINT1",
+  "RARM_JOINT0", "RARM_JOINT1", "RARM_JOINT2", "RARM_JOINT3", "RARM_JOINT4", "RARM_JOINT5", "RARM_JOINT6",
+  "LARM_JOINT0", "LARM_JOINT1", "LARM_JOINT2", "LARM_JOINT3", "LARM_JOINT4", "LARM_JOINT5", "LARM_JOINT6"
+};
+
+static const std::vector<std::string> RGRIPPER_JOINTS = {
+  "RARM_JOINT7", "RHAND_JOINT0", "RHAND_JOINT1", "RHAND_JOINT2", "RHAND_JOINT3", "RHAND_JOINT4"
+};
+
+static const std::vector<std::string> LGRIPPER_JOINTS = {
+  "LARM_JOINT7", "LHAND_JOINT0", "LHAND_JOINT1", "LHAND_JOINT2", "LHAND_JOINT3", "LHAND_JOINT4"
+};
+
 struct VREPForceSensor
 {
-  uint8_t status = 0;
-  float forces[3] = {0.0f, 0.0f, 0.0f};
-  float torques[3] = {0.0f, 0.0f, 0.0f};
+  int status = 0;
+  Eigen::Vector3d force;
+  Eigen::Vector3d torque;
 };
 
 struct VREPRemoteAPIWrapperImpl
 {
   /* Store client id */
   int cId = -1;
+  std::map<std::string, float> joints;
   std::map<std::string, VREPForceSensor> sensors = {};
   /* Default communication mode with the API */
   const static int opmode = simx_opmode_oneshot_wait;
   const static int opmode_streaming = simx_opmode_streaming;
   const static int opmode_buffer = simx_opmode_buffer;
-  int handle(const std::string & name)
+  std::vector<std::string> string_data_to_vec()
   {
-    if(handles.count(name) == 0)
+    std::vector<std::string> res;
+    unsigned int j = 0;
+    for(int i = 0; i < string_data_c; ++i)
     {
-      int id;
-      simxGetObjectHandle(cId, name.c_str(), &id, opmode);
-      std::cout << "New handle for object " << name << " " << id << std::endl;
-      if(id == 0)
+      std::stringstream ss;
+      while(string_data[j] != '\0')
       {
-        std::cerr << "No handle for object " << name << std::endl;
-        throw("Unrecognized object");
+        ss << string_data[j];
+        ++j;
       }
-      handles[name] = id;
+      res.push_back(ss.str());
+      ++j;
     }
-    return handles[name];
+    return res;
+  }
+  void get_handles(int object_type, const std::vector<std::string> & names)
+  {
+    int handle_data_c; int * handle_data = NULL;
+    simxGetObjectGroupData(cId, object_type, 0,
+                           &handle_data_c, &handle_data,
+                           NULL, NULL, NULL, NULL,
+                           &string_data_c, &string_data, opmode);
+    auto simNames = string_data_to_vec();
+    for(const auto & n : names)
+    {
+      size_t i = 0;
+      for(i = 0; i < simNames.size(); ++i)
+      {
+        if(simNames[i] == n)
+        {
+          handles[n] = handle_data[i];
+          this->names[handle_data[i]] = n;
+          break;
+        }
+      }
+      if(i == simNames.size())
+      {
+        LOG_WARNING("No object named " << n << " in VREP simulation")
+      }
+    }
+  }
+  void joint_handles(const std::vector<std::string> & jnames)
+  {
+    get_handles(sim_object_joint_type, jnames);
+  }
+  void sensor_handles(const std::vector<std::string> & snames)
+  {
+    get_handles(sim_object_forcesensor_type, snames);
+  }
+
+  void init()
+  {
+    simxGetObjectGroupData(cId, sim_object_joint_type, 15,
+                           &joint_handle_c, &joint_handle,
+                           NULL, NULL,
+                           &joint_data_c, &joint_data,
+                           NULL, NULL, opmode_streaming);
+    simxGetObjectGroupData(cId, sim_object_forcesensor_type, 14,
+                           &force_handle_c, &force_handle,
+                           &force_status_data_c, &force_status_data,
+                           &force_data_c, &force_data,
+                           NULL, NULL, opmode_streaming);
+  }
+
+  void update()
+  {
+    /* Read joint data */
+    simxGetObjectGroupData(cId, sim_object_joint_type, 15,
+                           &joint_handle_c, &joint_handle,
+                           NULL, NULL,
+                           &joint_data_c, &joint_data,
+                           NULL, NULL, opmode_streaming);
+    for(int i = 0; i < joint_handle_c; ++i)
+    {
+      int h = joint_handle[i];
+      if(names.count(h) && joints.count(names[h]))
+      {
+        joints[names[h]] = joint_data[2*i];
+      }
+    }
+    /* Read force sensor data */
+    simxGetObjectGroupData(cId, sim_object_forcesensor_type, 14,
+                           &force_handle_c, &force_handle,
+                           &force_status_data_c, &force_status_data,
+                           &force_data_c, &force_data,
+                           NULL, NULL, opmode_buffer);
+    for(int i = 0; i < force_handle_c; ++i)
+    {
+      int h = force_handle[i];
+      if(names.count(h) && sensors.count(names[h]))
+      {
+        auto & s = sensors[names[h]];
+        s.status = force_status_data[i];
+        s.force.x() = force_data[6*i+0];
+        s.force.y() = force_data[6*i+1];
+        s.force.z() = force_data[6*i+2];
+        s.torque.x() = force_data[6*i+3];
+        s.torque.y() = force_data[6*i+4];
+        s.torque.z() = force_data[6*i+5];
+      }
+    }
+  }
+
+  std::vector<double> qIn()
+  {
+    std::vector<double> res(REF_JOINT_ORDER.size());
+    for(size_t i = 0; i < REF_JOINT_ORDER.size(); ++i)
+    {
+      res[i] = joints[REF_JOINT_ORDER[i]];
+    }
+    return res;
+  }
+
+  typedef std::pair<Eigen::Vector3d, Eigen::Vector3d> wrench_t;
+  std::vector<wrench_t> wrenches()
+  {
+    std::vector<wrench_t> res;
+    for(const auto & fs : sensors)
+    {
+      res.push_back({fs.second.force, fs.second.torque});
+    }
+    return res;
+  }
+
+  void qOut(mc_control::MCGlobalController & controller)
+  {
+    const mc_control::QPResultMsg & res = controller.send(0);
+    for(const auto & jn : MAIN_JOINTS)
+    {
+      simxSetJointTargetPosition(cId, handles[jn],
+                                 static_cast<float>(res.robots_state[0].q[6 + controller.robot().jointIndexByName(jn)]),
+                                 opmode_streaming);
+    }
   }
 private:
-  /* Store handles */
+  /* Store name to handle */
   std::map<std::string, int> handles = {};
+  /* Store handle to name */
+  std::map<int, std::string> names = {};
+
+  /* Used to retrieve data returned by the remote API */
+  int joint_handle_c = 0; int * joint_handle = 0;
+  int joint_data_c = 0; float * joint_data = 0;
+  int force_handle_c = 0; int * force_handle = 0;
+  int force_status_data_c = 0; int * force_status_data = 0;
+  int force_data_c = 0; float * force_data = 0;
+  int string_data_c = 0; char * string_data = 0;
 };
 
 VREPRemoteAPIWrapper::VREPRemoteAPIWrapper(const std::string & host, int port, int timeout, bool waitUntilConnected, bool doNotReconnect, int commThreadCycleInMs): impl(new VREPRemoteAPIWrapperImpl())
@@ -53,10 +212,11 @@ VREPRemoteAPIWrapper::VREPRemoteAPIWrapper(const std::string & host, int port, i
   impl->cId = simxStart(host.c_str(), port, waitUntilConnected ? 1 : 0, doNotReconnect ? 1 : 0, timeout, commThreadCycleInMs);
   if(impl->cId >= 0)
   {
-    std::cout << "Connected to VREP" << std::endl;
+    LOG_SUCCESS("Connected to VREP")
   }
   else
   {
+    LOG_ERROR("Failed to connect to VREP")
     throw("Failed to connect to VREP");
   }
   simxSynchronous(impl->cId, 1);
@@ -67,67 +227,44 @@ VREPRemoteAPIWrapper::~VREPRemoteAPIWrapper()
   simxFinish(impl->cId);
 }
 
-void VREPRemoteAPIWrapper::readForceSensors(const std::vector<std::string> & sensors)
+void VREPRemoteAPIWrapper::startSimulation(mc_control::MCGlobalController & controller)
 {
-  for(const auto & sensor : sensors)
+  const mc_rbdyn::Robot & robot = controller.robot();
+  /* Find all joints handle and start the position streaming */
+  std::vector<std::string> jnames;
+  for(const auto & j : robot.mb().joints())
   {
-    int opmode = impl->opmode_buffer;
-    if(impl->sensors.count(sensor) == 0)
-    {
-      std::cout << "Add sensor " << sensor << std::endl;
-      impl->sensors[sensor] = VREPForceSensor();
-      opmode = impl->opmode_streaming;
-    }
-    simxReadForceSensor(impl->cId, impl->handle(sensor),
-                        &(impl->sensors[sensor].status),
-                        &(impl->sensors[sensor].forces[0]),
-                        &(impl->sensors[sensor].torques[0]),
-                        opmode);
+    jnames.push_back(j.name());
   }
+  impl->joint_handles(jnames);
+  impl->sensor_handles(robot.forceSensorsByName());
+  LOG_SUCCESS("Starting simulation")
+  simxStartSimulation(impl->cId, impl->opmode);
+
+  /* Initialize the controller */
+  impl->init();
+  impl->update();
+  controller.running = true;
+  controller.init(impl->qIn());
 }
 
-void VREPRemoteAPIWrapper::startSimulation()
+void VREPRemoteAPIWrapper::nextSimulationStep(mc_control::MCGlobalController & controller)
 {
-  simxStartSimulation(impl->cId, impl->opmode);
+  /* Update sensor information */
+  impl->update();
+  /* Send the update to the controller */
+  controller.setEncoderValues(impl->qIn());
+  controller.setWrenches(impl->wrenches());
+  /* Run */
+  if(controller.run())
+  {
+    impl->qOut(controller);
+  }
+  /* Trigger next simulation step */
+  simxSynchronousTrigger(impl->cId);
 }
 
 void VREPRemoteAPIWrapper::stopSimulation()
 {
   simxStopSimulation(impl->cId, impl->opmode);
-}
-
-void VREPRemoteAPIWrapper::nextSimulationStep()
-{
-    simxSynchronousTrigger(impl->cId);
-}
-
-int VREPRemoteAPIWrapper::getJointHandle(const std::string & jname)
-{
-  return impl->handle(jname);
-}
-
-void VREPRemoteAPIWrapper::setJointTargetPosition(const std::string & jname, float value)
-{
-  simxSetJointTargetPosition(impl->cId, impl->handle(jname), value, impl->opmode);
-}
-
-float VREPRemoteAPIWrapper::getJointPosition(const std::string & jname)
-{
-  float ret;
-  simxGetJointPosition(impl->cId, impl->handle(jname), &ret, impl->opmode);
-  return ret;
-}
-
-Eigen::Vector3f VREPRemoteAPIWrapper::getForce(const std::string & sensor)
-{
-  if(impl->sensors.count(sensor) == 0)
-  {
-    std::cerr << "Call readForceSensors with sensor " << sensor << " before attempting to get sensor values" << std::endl;
-    throw("Call readForceSensors before reading a sensor");
-  }
-  Eigen::Vector3f ret;
-  ret.x() = impl->sensors[sensor].forces[0];
-  ret.y() = impl->sensors[sensor].forces[1];
-  ret.z() = impl->sensors[sensor].forces[2];
-  return ret;
 }

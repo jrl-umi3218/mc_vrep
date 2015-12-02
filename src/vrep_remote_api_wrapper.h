@@ -5,7 +5,7 @@
 
 #include <Eigen/Core>
 
-/* FIXME For now, this reads raw-data */
+#include <mc_control/mc_global_controller.h>
 
 struct VREPRemoteAPIWrapperImpl;
 
@@ -16,21 +16,11 @@ public:
 
   ~VREPRemoteAPIWrapper();
 
-  void readForceSensors(const std::vector<std::string> & sensors);
+  void startSimulation(mc_control::MCGlobalController & controller);
 
-  void startSimulation();
+  void nextSimulationStep(mc_control::MCGlobalController & controller);
 
   void stopSimulation();
-
-  void nextSimulationStep();
-
-  int getJointHandle(const std::string & jname);
-
-  void setJointTargetPosition(const std::string & jname, float value);
-
-  float getJointPosition(const std::string & jname);
-
-  Eigen::Vector3f getForce(const std::string & sensor);
 private:
   std::unique_ptr<VREPRemoteAPIWrapperImpl> impl;
 };

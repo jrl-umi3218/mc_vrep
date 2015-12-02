@@ -13,6 +13,8 @@ enable_language(C)
 
 search_for_eigen()
 
+add_required_dependency(mc_rtc)
+
 add_subdirectory(src)
 
 # This should be called at the end

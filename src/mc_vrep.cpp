@@ -1,28 +1,34 @@
 #include "vrep_remote_api_wrapper.h"
 
+#include <mc_control/mc_global_controller.h>
+#include <mc_rtc/logging.h>
+#include <mc_rtc/ros.h>
+
 #include <cmath>
 #include <iostream>
 
 int main(int, char *[])
 {
+  /* Start the VREP remote API */
   VREPRemoteAPIWrapper vrep("127.0.0.1", 4242);
 
-  vrep.startSimulation();
+  /* Create a global controller */
+  mc_control::MCGlobalController controller;
 
-  std::vector<std::string> sensors = {"RightFootForceSensor"};
+  vrep.startSimulation(controller);
 
-  float dir = 0.01f;
-  float j7 = vrep.getJointPosition("RARM_JOINT7");
+  controller.set_joint_pos("HEAD_JOINT1", 0.6);
   for(unsigned int i = 0; i < 200*20; ++i)
   {
-    if(std::fabs(j7) >= 0.7f)
+    if(controller.robot().mbc().q[controller.robot().jointIndexByName("HEAD_JOINT1")][0] > 0.5)
     {
-      dir = -1.0f*dir;
+      controller.set_joint_pos("HEAD_JOINT1", -0.6);
     }
-    j7 += dir;
-    vrep.setJointTargetPosition("RARM_JOINT7", j7);
-    vrep.readForceSensors(sensors);
-    vrep.nextSimulationStep();
+    if(controller.robot().mbc().q[controller.robot().jointIndexByName("HEAD_JOINT1")][0] < -0.5)
+    {
+      controller.set_joint_pos("HEAD_JOINT1", 0.6);
+    }
+    vrep.nextSimulationStep(controller);
   }
 
   vrep.stopSimulation();
