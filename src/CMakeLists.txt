@@ -22,6 +22,7 @@ add_definitions("-std=c++0x")
 
 set(mc_vrep_src
   vrep_remote_api_wrapper.cpp
+  mc_vrep_cli.cpp
   mc_vrep.cpp
 )
 

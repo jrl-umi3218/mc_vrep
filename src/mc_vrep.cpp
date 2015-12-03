@@ -1,4 +1,5 @@
 #include "vrep_remote_api_wrapper.h"
+#include "mc_vrep_cli.h"
 
 #include <mc_control/mc_global_controller.h>
 #include <mc_rtc/logging.h>
@@ -6,6 +7,16 @@
 
 #include <cmath>
 #include <iostream>
+#include <thread>
+
+void simThread(VREPRemoteAPIWrapper & vrep, mc_control::MCGlobalController & controller, MCVREPCLI & cli)
+{
+  while(!cli.done())
+  {
+    vrep.nextSimulationStep(controller);
+  }
+  vrep.stopSimulation();
+}
 
 int main(int, char *[])
 {
@@ -17,15 +28,14 @@ int main(int, char *[])
 
   vrep.startSimulation(controller);
 
-  double cur_cmd = 0.6;
-  for(unsigned int i = 0; i < 200*20; ++i)
-  {
-    if(fabs(controller.robot().mbc().q[controller.robot().jointIndexByName("HEAD_JOINT1")][0] - cur_cmd) < 0.05) { cur_cmd = -cur_cmd; }
-    controller.set_joint_pos("HEAD_JOINT1", cur_cmd);
-    vrep.nextSimulationStep(controller);
-  }
+  MCVREPCLI cli(controller);
+  std::thread th(std::bind(&simThread,
+                           std::ref<VREPRemoteAPIWrapper>(vrep),
+                           std::ref<mc_control::MCGlobalController>(controller),
+                           std::ref<MCVREPCLI>(cli)));
 
-  vrep.stopSimulation();
+  cli.run();
 
+  th.join();
   return 0;
 }

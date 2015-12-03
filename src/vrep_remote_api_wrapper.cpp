@@ -51,7 +51,7 @@ struct VREPRemoteAPIWrapperImpl
 {
   /* Store client id */
   int cId = -1;
-  std::map<std::string, float> joints;
+  std::map<std::string, float> joints = {};
   std::map<std::string, VREPForceSensor> sensors = {};
   /* Default communication mode with the API */
   const static int opmode = simx_opmode_oneshot_wait;
@@ -103,10 +103,24 @@ struct VREPRemoteAPIWrapperImpl
   void joint_handles(const std::vector<std::string> & jnames)
   {
     get_handles(sim_object_joint_type, jnames);
+    for(const auto & jn : jnames)
+    {
+      if(handles.count(jn))
+      {
+        joints[jn] = 0;
+      }
+    }
   }
   void sensor_handles(const std::vector<std::string> & snames)
   {
     get_handles(sim_object_forcesensor_type, snames);
+    for(const auto & sn : snames)
+    {
+      if(handles.count(sn))
+      {
+        sensors[sn] = VREPForceSensor();
+      }
+    }
   }
 
   void init()
@@ -266,7 +280,6 @@ void VREPRemoteAPIWrapper::startSimulation(mc_control::MCGlobalController & cont
   /* Run one step of the simulation to get the data flowing */
   controller.running = false;
   impl->update();
-  impl->qIn();
   simxSynchronousTrigger(impl->cId);
 }
 
