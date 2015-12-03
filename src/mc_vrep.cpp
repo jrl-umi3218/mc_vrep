@@ -17,17 +17,11 @@ int main(int, char *[])
 
   vrep.startSimulation(controller);
 
-  controller.set_joint_pos("HEAD_JOINT1", 0.6);
+  double cur_cmd = 0.6;
   for(unsigned int i = 0; i < 200*20; ++i)
   {
-    if(controller.robot().mbc().q[controller.robot().jointIndexByName("HEAD_JOINT1")][0] > 0.5)
-    {
-      controller.set_joint_pos("HEAD_JOINT1", -0.6);
-    }
-    if(controller.robot().mbc().q[controller.robot().jointIndexByName("HEAD_JOINT1")][0] < -0.5)
-    {
-      controller.set_joint_pos("HEAD_JOINT1", 0.6);
-    }
+    if(fabs(controller.robot().mbc().q[controller.robot().jointIndexByName("HEAD_JOINT1")][0] - cur_cmd) < 0.05) { cur_cmd = -cur_cmd; }
+    controller.set_joint_pos("HEAD_JOINT1", cur_cmd);
     vrep.nextSimulationStep(controller);
   }
 

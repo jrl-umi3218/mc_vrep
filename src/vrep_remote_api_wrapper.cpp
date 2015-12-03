@@ -5,6 +5,7 @@ extern "C"
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wpedantic"
   #include "vrep_remote_api/extApi.h"
+  #include "vrep_remote_api/extApiCustom.h"
   #pragma GCC diagnostic pop
 }
 
@@ -129,7 +130,7 @@ struct VREPRemoteAPIWrapperImpl
                            &joint_handle_c, &joint_handle,
                            NULL, NULL,
                            &joint_data_c, &joint_data,
-                           NULL, NULL, opmode_streaming);
+                           NULL, NULL, opmode_buffer);
     for(int i = 0; i < joint_handle_c; ++i)
     {
       int h = joint_handle[i];
@@ -185,12 +186,27 @@ struct VREPRemoteAPIWrapperImpl
   void qOut(mc_control::MCGlobalController & controller)
   {
     const mc_control::QPResultMsg & res = controller.send(0);
-    for(const auto & jn : MAIN_JOINTS)
+    if(!qOut_started)
     {
-      simxSetJointTargetPosition(cId, handles[jn],
-                                 static_cast<float>(res.robots_state[0].q[6 + controller.robot().jointIndexByName(jn)]),
-                                 opmode_streaming);
+      qOut_handles.resize(MAIN_JOINTS.size() + 2);
+      qOut_positions.resize(MAIN_JOINTS.size() + 2);
     }
+    for(size_t i = 0; i < MAIN_JOINTS.size(); ++i)
+    {
+      const std::string & jn = MAIN_JOINTS[i];
+      qOut_handles[i] = handles[jn];
+      qOut_positions[i] = static_cast<float>(res.robots_state[0].q[6 + controller.robot().jointIndexByName(jn)]);
+    }
+    qOut_handles[MAIN_JOINTS.size()] = handles["RARM_JOINT7"];
+    qOut_positions[MAIN_JOINTS.size()] = controller.gripperQ(false)[0];
+    qOut_handles[MAIN_JOINTS.size() + 1] = handles["LARM_JOINT7"];
+    qOut_positions[MAIN_JOINTS.size() + 1] = controller.gripperQ(true)[0];
+    simxCustomSetJointsTargetPositions(cId,
+                                       static_cast<simxInt>(qOut_handles.size()),
+                                       qOut_handles.data(),
+                                       qOut_positions.data(),
+                                       qOut_started?opmode_streaming:opmode_buffer);
+    qOut_started = true;
   }
 private:
   /* Store name to handle */
@@ -205,6 +221,11 @@ private:
   int force_status_data_c = 0; int * force_status_data = 0;
   int force_data_c = 0; float * force_data = 0;
   int string_data_c = 0; char * string_data = 0;
+
+  /* Used to send data to the remote API */
+  bool qOut_started = false;
+  std::vector<int> qOut_handles;
+  std::vector<float> qOut_positions;
 };
 
 VREPRemoteAPIWrapper::VREPRemoteAPIWrapper(const std::string & host, int port, int timeout, bool waitUntilConnected, bool doNotReconnect, int commThreadCycleInMs): impl(new VREPRemoteAPIWrapperImpl())
@@ -239,21 +260,31 @@ void VREPRemoteAPIWrapper::startSimulation(mc_control::MCGlobalController & cont
   impl->joint_handles(jnames);
   impl->sensor_handles(robot.forceSensorsByName());
   LOG_SUCCESS("Starting simulation")
+  impl->init();
   simxStartSimulation(impl->cId, impl->opmode);
 
-  /* Initialize the controller */
-  impl->init();
+  /* Run one step of the simulation to get the data flowing */
+  controller.running = false;
   impl->update();
-  controller.running = true;
-  controller.init(impl->qIn());
+  impl->qIn();
+  simxSynchronousTrigger(impl->cId);
 }
 
 void VREPRemoteAPIWrapper::nextSimulationStep(mc_control::MCGlobalController & controller)
 {
   /* Update sensor information */
   impl->update();
+  if(!controller.running)
+  {
+    std::vector<double> qIn = impl->qIn();
+    controller.init(qIn);
+    controller.running = true;
+  }
+  else
+  {
+    controller.setEncoderValues(impl->qIn());
+  }
   /* Send the update to the controller */
-  controller.setEncoderValues(impl->qIn());
   controller.setWrenches(impl->wrenches());
   /* Run */
   if(controller.run())

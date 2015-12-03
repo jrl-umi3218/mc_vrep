@@ -4,12 +4,15 @@ add_definitions(-DNON_MATLAB_PARSING -DMAX_EXT_API_CONNECTIONS=255)
 set(vrep_remote_api_src
   vrep_remote_api/extApi.c
   vrep_remote_api/extApiPlatform.c
+  vrep_remote_api/extApiCustom.c
 )
 
 set(vrep_remote_api_hdr
   vrep_remote_api/extApi.h
   vrep_remote_api/extApiInternal.h
   vrep_remote_api/extApiPlatform.h
+  vrep_remote_api/extApiCustom.h
+  vrep_remote_api/extApiCustomConst.h
   vrep_remote_api/v_repConst.h
 )
 
