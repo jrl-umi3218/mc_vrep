@@ -79,7 +79,8 @@ Clone the [mc_vrep repository](https://gite.lirmm.fr/multi-contact/mc_vrep) and 
 Put the `simxCustomCmd.cpp` file located in the repository in `$VREP_INSTALL_FOLDER/programming/v_repExtRemoteApi`, then `cd` to this folder, rebuild the `v_repExtRemoteApi` plugin (`make` on Linux/MacOS or using the provided Visual Studio solution for Windows) and copy the resulting library (`lib/libv_repExtRemoteApi.so`) in `$VREP_INSTALL_FOLDER` (overwriting the existing one).
 
 The content of `$VREP_INSTALL_FOLDER/remoteApiCOnnections.txt` should look like this (any port is ok of course as long as you reflect the change in `mc_vrep.cpp`):
-```portIndex1_port = 4242
+```
+portIndex1_port = 4242
 portIndex1_debug = false
 portIndex1_syncSimTrigger = true
 ```
