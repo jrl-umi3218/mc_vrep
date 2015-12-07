@@ -44,6 +44,22 @@ namespace
     return controller.set_joint_pos(jn, v);
   }
 
+  bool get_joint_pos(mc_control::MCGlobalController & controller, std::stringstream & args)
+  {
+    std::string jn;
+    args >> jn;
+    if (controller.robot().hasJoint(jn))
+    {
+      std::cout << jn << ": " << controller.robot().mbc().q[controller.robot().jointIndexByName(jn)][0] << std::endl;
+    }
+    else
+    {
+      std::cout << "No joint named " << jn << " in the robot" << std::endl;
+    }
+    return true;
+
+  }
+
   bool move_com(mc_control::MCGlobalController & controller, std::stringstream & args)
   {
     double x, y, z = 0;
@@ -71,6 +87,7 @@ namespace
 
   std::map<std::string, std::function<bool(mc_control::MCGlobalController&, std::stringstream&)>> cli_fn = {
     {"set_joint_pos", std::bind(&set_joint_pos, std::placeholders::_1, std::placeholders::_2)},
+    {"get_joint_pos", std::bind(&get_joint_pos, std::placeholders::_1, std::placeholders::_2) },
     {"open_grippers", std::bind(&open_grippers, std::placeholders::_1, std::placeholders::_2)},
     {"close_grippers", std::bind(&close_grippers, std::placeholders::_1, std::placeholders::_2)},
     {"set_gripper", std::bind(&set_gripper, std::placeholders::_1, std::placeholders::_2)},
@@ -103,7 +120,15 @@ void MCVREPCLI::run()
     }
     else if(cli_fn.count(token))
     {
-      cli_fn[token](controller, ss);
+      bool ret = cli_fn[token](controller, ss);
+      if (!ret)
+      {
+        std::cerr << "Failed to invoke the previous command" << std::endl;
+      }
+    }
+    else
+    {
+      std::cerr << "Unkwown command " << token << std::endl;
     }
   }
 }
