@@ -65,7 +65,7 @@ Then clone from https://gite.lirmm.fr/multi-contact/mc_rtc/ and build (cmake/mak
 
 **Building without ROS support**
 
-If you are building `mc_rtc` without ROS support then you need to tell him where it can fetch the models for HRP2-kai and the environment. This is done by defining:
+If you are building `mc_rtc` without ROS support then you need to tell cmake where it can fetch the models for HRP2-kai and the environment. This is done by defining the following variables when invoking cmake:
 * `-DHRP2_DESCRIPTION_PATH=$PATH` where `$PATH` is the location of the `hrp2_drc_description` folder from the [hrp2_drc repository](https://gite.lirmm.fr/mc-hrp2/hrp2_drc)
 * `-DMC_ENV_DESCRIPTION_PATH=$PATH` where `$PATH` is the location of the `mc_env_description` folder from the [mc_ros repository](https://gite.lirmm.fr/multi-contact/mc_ros)
 
