@@ -15,6 +15,8 @@ extern "C"
 #include <iostream>
 #include <map>
 
+
+#ifndef CHOOSE_HRP4
 static const std::vector<std::string> REF_JOINT_ORDER = {
   "RLEG_JOINT0", "RLEG_JOINT1", "RLEG_JOINT2", "RLEG_JOINT3", "RLEG_JOINT4", "RLEG_JOINT5",
   "LLEG_JOINT0", "LLEG_JOINT1", "LLEG_JOINT2", "LLEG_JOINT3", "LLEG_JOINT4", "LLEG_JOINT5",
@@ -39,6 +41,34 @@ static const std::vector<std::string> RGRIPPER_JOINTS = {
 static const std::vector<std::string> LGRIPPER_JOINTS = {
   "LARM_JOINT7", "LHAND_JOINT0", "LHAND_JOINT1", "LHAND_JOINT2", "LHAND_JOINT3", "LHAND_JOINT4"
 };
+#else
+static const std::vector<std::string> REF_JOINT_ORDER = {
+  //"Root"
+  "R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R", "R_FOOT", 
+  "L_HIP_Y", "L_HIP_R", "L_HIP_P", "L_KNEE_P", "L_ANKLE_P", "L_ANKLE_R", "L_FOOT", 
+  "CHEST_P", "CHEST_Y", "NECK_Y", "NECK_P", 
+  "R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P", "R_WRIST_Y", "R_WRIST_P", "R_WRIST_R", 
+  "R_HAND_J0", "R_HAND_J1", "R_F22", "R_F23", "R_F32", "R_F33", "R_F42", "R_F43", "R_F52", "R_F53", 
+  "L_SHOULDER_P", "L_SHOULDER_R", "L_SHOULDER_Y", "L_ELBOW_P", "L_WRIST_Y", "L_WRIST_P", "L_WRIST_R", 
+  "L_HAND_J0", "L_HAND_J1", "L_F22", "L_F23", "L_F32", "L_F33", "L_F42", "L_F43", "L_F52", "L_F53"
+};
+
+static const std::vector<std::string> MAIN_JOINTS = {"R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R", "R_FOOT", 
+  "L_HIP_Y", "L_HIP_R", "L_HIP_P", "L_KNEE_P", "L_ANKLE_P", "L_ANKLE_R", "L_FOOT", 
+  "CHEST_P", "CHEST_Y", "NECK_Y", "NECK_P", 
+  "R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P", "R_WRIST_Y", "R_WRIST_P", "R_WRIST_R", 
+  "L_SHOULDER_P", "L_SHOULDER_R", "L_SHOULDER_Y", "L_ELBOW_P", "L_WRIST_Y", "L_WRIST_P", "L_WRIST_R"
+};
+
+static const std::vector<std::string> RGRIPPER_JOINTS = {
+  "R_HAND_J0", "R_HAND_J1", "R_F22", "R_F23", "R_F32", "R_F33", "R_F42", "R_F43", "R_F52", "R_F53"
+};
+
+static const std::vector<std::string> LGRIPPER_JOINTS = {
+  "L_HAND_J0", "L_HAND_J1", "L_F22", "L_F23", "L_F32", "L_F33", "L_F42", "L_F43", "L_F52", "L_F53"
+};
+
+#endif
 
 struct VREPForceSensor
 {
@@ -108,6 +138,10 @@ struct VREPRemoteAPIWrapperImpl
       if(handles.count(jn))
       {
         joints[jn] = 0;
+      }
+      else
+      {
+        LOG_WARNING("No joint named " << jn << " in VREP simulation")
       }
     }
   }

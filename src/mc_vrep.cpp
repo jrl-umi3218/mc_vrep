@@ -21,7 +21,7 @@ void simThread(VREPRemoteAPIWrapper & vrep, mc_control::MCGlobalController & con
 int main(int argc, char * argv[])
 {
   /* Start the VREP remote API */
-  VREPRemoteAPIWrapper vrep("127.0.0.1", 4242);
+  VREPRemoteAPIWrapper vrep("127.0.0.1", 19997);
 
   /* Create a global controller */
   std::string conf_file = mc_rtc::CONF_PATH;
@@ -29,8 +29,9 @@ int main(int argc, char * argv[])
   {
     conf_file = argv[1];
   }
-  mc_control::MCGlobalController controller(conf_file);
-
+  //mc_control::MCGlobalController controller(conf_file);
+  mc_control::MCGlobalController controller("C:/Work/Code/Joris/mc_vrep/etc/mc_vrep.conf");
+  
   vrep.startSimulation(controller);
 
   MCVREPCLI cli(controller);

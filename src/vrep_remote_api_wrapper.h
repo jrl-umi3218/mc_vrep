@@ -6,6 +6,7 @@
 #include <Eigen/Core>
 
 #include <mc_control/mc_global_controller.h>
+#include <mc_rtc/config.h>
 
 struct VREPRemoteAPIWrapperImpl;
 
