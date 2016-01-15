@@ -13,7 +13,7 @@ struct VREPRemoteAPIWrapperImpl;
 struct VREPRemoteAPIWrapper
 {
 public:
-  VREPRemoteAPIWrapper(const std::string & host, int port, int timeout = 3000, bool waitUntilConnected = true, bool doNotReconnect = true, int commThreadCycleInMs = 1);
+  VREPRemoteAPIWrapper(const std::string & main_robot, const std::string & host, int port, int timeout = 3000, bool waitUntilConnected = true, bool doNotReconnect = true, int commThreadCycleInMs = 1);
 
   ~VREPRemoteAPIWrapper();
 

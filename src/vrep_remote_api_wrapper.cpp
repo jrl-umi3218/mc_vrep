@@ -12,63 +12,9 @@ extern "C"
 #include <mc_rtc/logging.h>
 
 #include <array>
+#include <fstream>
 #include <iostream>
 #include <map>
-
-
-#ifndef CHOOSE_HRP4
-static const std::vector<std::string> REF_JOINT_ORDER = {
-  "RLEG_JOINT0", "RLEG_JOINT1", "RLEG_JOINT2", "RLEG_JOINT3", "RLEG_JOINT4", "RLEG_JOINT5",
-  "LLEG_JOINT0", "LLEG_JOINT1", "LLEG_JOINT2", "LLEG_JOINT3", "LLEG_JOINT4", "LLEG_JOINT5",
-  "CHEST_JOINT0", "CHEST_JOINT1", "HEAD_JOINT0", "HEAD_JOINT1",
-  "RARM_JOINT0", "RARM_JOINT1", "RARM_JOINT2", "RARM_JOINT3", "RARM_JOINT4", "RARM_JOINT5", "RARM_JOINT6", "RARM_JOINT7",
-  "LARM_JOINT0", "LARM_JOINT1", "LARM_JOINT2", "LARM_JOINT3", "LARM_JOINT4", "LARM_JOINT5", "LARM_JOINT6", "LARM_JOINT7",
-  "RHAND_JOINT0", "RHAND_JOINT1", "RHAND_JOINT2", "RHAND_JOINT3", "RHAND_JOINT4",
-  "LHAND_JOINT0", "LHAND_JOINT1", "LHAND_JOINT2", "LHAND_JOINT3", "LHAND_JOINT4"};
-
-static const std::vector<std::string> MAIN_JOINTS = {
-  "RLEG_JOINT0", "RLEG_JOINT1", "RLEG_JOINT2", "RLEG_JOINT3", "RLEG_JOINT4", "RLEG_JOINT5",
-  "LLEG_JOINT0", "LLEG_JOINT1", "LLEG_JOINT2", "LLEG_JOINT3", "LLEG_JOINT4", "LLEG_JOINT5",
-  "CHEST_JOINT0", "CHEST_JOINT1", "HEAD_JOINT0", "HEAD_JOINT1",
-  "RARM_JOINT0", "RARM_JOINT1", "RARM_JOINT2", "RARM_JOINT3", "RARM_JOINT4", "RARM_JOINT5", "RARM_JOINT6",
-  "LARM_JOINT0", "LARM_JOINT1", "LARM_JOINT2", "LARM_JOINT3", "LARM_JOINT4", "LARM_JOINT5", "LARM_JOINT6"
-};
-
-static const std::vector<std::string> RGRIPPER_JOINTS = {
-  "RARM_JOINT7", "RHAND_JOINT0", "RHAND_JOINT1", "RHAND_JOINT2", "RHAND_JOINT3", "RHAND_JOINT4"
-};
-
-static const std::vector<std::string> LGRIPPER_JOINTS = {
-  "LARM_JOINT7", "LHAND_JOINT0", "LHAND_JOINT1", "LHAND_JOINT2", "LHAND_JOINT3", "LHAND_JOINT4"
-};
-#else
-static const std::vector<std::string> REF_JOINT_ORDER = {
-  //"Root"
-  "R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R", "R_FOOT", 
-  "L_HIP_Y", "L_HIP_R", "L_HIP_P", "L_KNEE_P", "L_ANKLE_P", "L_ANKLE_R", "L_FOOT", 
-  "CHEST_P", "CHEST_Y", "NECK_Y", "NECK_P", 
-  "R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P", "R_WRIST_Y", "R_WRIST_P", "R_WRIST_R", 
-  "R_HAND_J0", "R_HAND_J1", "R_F22", "R_F23", "R_F32", "R_F33", "R_F42", "R_F43", "R_F52", "R_F53", 
-  "L_SHOULDER_P", "L_SHOULDER_R", "L_SHOULDER_Y", "L_ELBOW_P", "L_WRIST_Y", "L_WRIST_P", "L_WRIST_R", 
-  "L_HAND_J0", "L_HAND_J1", "L_F22", "L_F23", "L_F32", "L_F33", "L_F42", "L_F43", "L_F52", "L_F53"
-};
-
-static const std::vector<std::string> MAIN_JOINTS = {"R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R", "R_FOOT", 
-  "L_HIP_Y", "L_HIP_R", "L_HIP_P", "L_KNEE_P", "L_ANKLE_P", "L_ANKLE_R", "L_FOOT", 
-  "CHEST_P", "CHEST_Y", "NECK_Y", "NECK_P", 
-  "R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P", "R_WRIST_Y", "R_WRIST_P", "R_WRIST_R", 
-  "L_SHOULDER_P", "L_SHOULDER_R", "L_SHOULDER_Y", "L_ELBOW_P", "L_WRIST_Y", "L_WRIST_P", "L_WRIST_R"
-};
-
-static const std::vector<std::string> RGRIPPER_JOINTS = {
-  "R_HAND_J0", "R_HAND_J1", "R_F22", "R_F23", "R_F32", "R_F33", "R_F42", "R_F43", "R_F52", "R_F53"
-};
-
-static const std::vector<std::string> LGRIPPER_JOINTS = {
-  "L_HAND_J0", "L_HAND_J1", "L_F22", "L_F23", "L_F32", "L_F33", "L_F42", "L_F43", "L_F52", "L_F53"
-};
-
-#endif
 
 struct VREPForceSensor
 {
@@ -79,6 +25,70 @@ struct VREPForceSensor
 
 struct VREPRemoteAPIWrapperImpl
 {
+  VREPRemoteAPIWrapperImpl(const std::string & robot_name)
+  : log("/tmp/mc_vrep.log")
+  {
+    if(robot_name == "hrp2_drc")
+    {
+      REF_JOINT_ORDER = {
+  "RLEG_JOINT0", "RLEG_JOINT1", "RLEG_JOINT2", "RLEG_JOINT3", "RLEG_JOINT4", "RLEG_JOINT5",
+  "LLEG_JOINT0", "LLEG_JOINT1", "LLEG_JOINT2", "LLEG_JOINT3", "LLEG_JOINT4", "LLEG_JOINT5",
+  "CHEST_JOINT0", "CHEST_JOINT1", "HEAD_JOINT0", "HEAD_JOINT1",
+  "RARM_JOINT0", "RARM_JOINT1", "RARM_JOINT2", "RARM_JOINT3", "RARM_JOINT4", "RARM_JOINT5", "RARM_JOINT6", "RARM_JOINT7",
+  "LARM_JOINT0", "LARM_JOINT1", "LARM_JOINT2", "LARM_JOINT3", "LARM_JOINT4", "LARM_JOINT5", "LARM_JOINT6", "LARM_JOINT7",
+  "RHAND_JOINT0", "RHAND_JOINT1", "RHAND_JOINT2", "RHAND_JOINT3", "RHAND_JOINT4",
+  "LHAND_JOINT0", "LHAND_JOINT1", "LHAND_JOINT2", "LHAND_JOINT3", "LHAND_JOINT4"};
+
+      MAIN_JOINTS = {
+  "RLEG_JOINT0", "RLEG_JOINT1", "RLEG_JOINT2", "RLEG_JOINT3", "RLEG_JOINT4", "RLEG_JOINT5",
+  "LLEG_JOINT0", "LLEG_JOINT1", "LLEG_JOINT2", "LLEG_JOINT3", "LLEG_JOINT4", "LLEG_JOINT5",
+  "CHEST_JOINT0", "CHEST_JOINT1", "HEAD_JOINT0", "HEAD_JOINT1",
+  "RARM_JOINT0", "RARM_JOINT1", "RARM_JOINT2", "RARM_JOINT3", "RARM_JOINT4", "RARM_JOINT5", "RARM_JOINT6",
+  "LARM_JOINT0", "LARM_JOINT1", "LARM_JOINT2", "LARM_JOINT3", "LARM_JOINT4", "LARM_JOINT5", "LARM_JOINT6"
+};
+
+      RGRIPPER_JOINTS = {
+  "RARM_JOINT7", "RHAND_JOINT0", "RHAND_JOINT1", "RHAND_JOINT2", "RHAND_JOINT3", "RHAND_JOINT4"
+};
+
+      LGRIPPER_JOINTS = {
+  "LARM_JOINT7", "LHAND_JOINT0", "LHAND_JOINT1", "LHAND_JOINT2", "LHAND_JOINT3", "LHAND_JOINT4"
+};
+    }
+    else if(robot_name == "hrp4")
+    {
+      REF_JOINT_ORDER = {
+  //"Root"
+  "R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R",
+  "L_HIP_Y", "L_HIP_R", "L_HIP_P", "L_KNEE_P", "L_ANKLE_P", "L_ANKLE_R",
+  "CHEST_P", "CHEST_Y", "NECK_Y", "NECK_P", 
+  "R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P", "R_WRIST_Y", "R_WRIST_P", "R_WRIST_R", 
+  "R_HAND_J0", "R_HAND_J1", "R_F22", "R_F23", "R_F32", "R_F33", "R_F42", "R_F43", "R_F52", "R_F53", 
+  "L_SHOULDER_P", "L_SHOULDER_R", "L_SHOULDER_Y", "L_ELBOW_P", "L_WRIST_Y", "L_WRIST_P", "L_WRIST_R", 
+  "L_HAND_J0", "L_HAND_J1", "L_F22", "L_F23", "L_F32", "L_F33", "L_F42", "L_F43", "L_F52", "L_F53"
+};
+
+      MAIN_JOINTS = {"R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R",
+  "L_HIP_Y", "L_HIP_R", "L_HIP_P", "L_KNEE_P", "L_ANKLE_P", "L_ANKLE_R",
+  "CHEST_P", "CHEST_Y", "NECK_Y", "NECK_P", 
+  "R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P", "R_WRIST_Y", "R_WRIST_P", "R_WRIST_R", 
+  "L_SHOULDER_P", "L_SHOULDER_R", "L_SHOULDER_Y", "L_ELBOW_P", "L_WRIST_Y", "L_WRIST_P", "L_WRIST_R"
+};
+
+      RGRIPPER_JOINTS = {
+  "R_HAND_J0", "R_HAND_J1", "R_F22", "R_F23", "R_F32", "R_F33", "R_F42", "R_F43", "R_F52", "R_F53"
+};
+
+      LGRIPPER_JOINTS = {
+  "L_HAND_J0", "L_HAND_J1", "L_F22", "L_F23", "L_F32", "L_F33", "L_F42", "L_F43", "L_F52", "L_F53"
+};
+    }
+    else
+    {
+      LOG_ERROR("Do not know how to send commands to " << robot_name)
+      throw("Unsupported robot");
+    }
+  }
   /* Store client id */
   int cId = -1;
   std::map<std::string, float> joints = {};
@@ -212,10 +222,18 @@ struct VREPRemoteAPIWrapperImpl
 
   std::vector<double> qIn()
   {
+    if(qOut_started)
+    {
+      log << iter;
+    }
     std::vector<double> res(REF_JOINT_ORDER.size());
     for(size_t i = 0; i < REF_JOINT_ORDER.size(); ++i)
     {
       res[i] = joints[REF_JOINT_ORDER[i]];
+      if(qOut_started)
+      {
+        log << " " << res[i];
+      }
     }
     return res;
   }
@@ -244,11 +262,26 @@ struct VREPRemoteAPIWrapperImpl
       const std::string & jn = MAIN_JOINTS[i];
       qOut_handles[i] = handles[jn];
       qOut_positions[i] = static_cast<float>(res.robots_state[0].q[6 + controller.robot().jointIndexByName(jn)]);
+      if(qOut_started)
+      {
+        log << " " << qOut_positions[i];
+        if(jn == "RARM_JOINT6")
+        {
+          log << " " << controller.gripperQ(false)[0];
+        }
+        if(jn == "LARM_JOINT6")
+        {
+          log << " " << controller.gripperQ(true)[0] << std::endl;
+        }
+      }
     }
-    qOut_handles[MAIN_JOINTS.size()] = handles["RARM_JOINT7"];
-    qOut_positions[MAIN_JOINTS.size()] = controller.gripperQ(false)[0];
-    qOut_handles[MAIN_JOINTS.size() + 1] = handles["LARM_JOINT7"];
-    qOut_positions[MAIN_JOINTS.size() + 1] = controller.gripperQ(true)[0];
+    if(controller.robot().name() == "hrp2_drc")
+    {
+      qOut_handles[MAIN_JOINTS.size()] = handles["RARM_JOINT7"];
+      qOut_positions[MAIN_JOINTS.size()] = controller.gripperQ(false)[0];
+      qOut_handles[MAIN_JOINTS.size() + 1] = handles["LARM_JOINT7"];
+      qOut_positions[MAIN_JOINTS.size() + 1] = controller.gripperQ(true)[0];
+    }
     simxCustomSetJointsTargetPositions(cId,
                                        static_cast<simxInt>(qOut_handles.size()),
                                        qOut_handles.data(),
@@ -274,9 +307,17 @@ private:
   bool qOut_started = false;
   std::vector<int> qOut_handles;
   std::vector<float> qOut_positions;
+
+  /* Log data */
+  unsigned int iter = 0;
+  std::ofstream log;
+  std::vector<std::string> REF_JOINT_ORDER;
+  std::vector<std::string> MAIN_JOINTS;
+  std::vector<std::string> RGRIPPER_JOINTS;
+  std::vector<std::string> LGRIPPER_JOINTS;
 };
 
-VREPRemoteAPIWrapper::VREPRemoteAPIWrapper(const std::string & host, int port, int timeout, bool waitUntilConnected, bool doNotReconnect, int commThreadCycleInMs): impl(new VREPRemoteAPIWrapperImpl())
+VREPRemoteAPIWrapper::VREPRemoteAPIWrapper(const std::string & main_robot, const std::string & host, int port, int timeout, bool waitUntilConnected, bool doNotReconnect, int commThreadCycleInMs): impl(new VREPRemoteAPIWrapperImpl(main_robot))
 {
   impl->cId = simxStart(host.c_str(), port, waitUntilConnected ? 1 : 0, doNotReconnect ? 1 : 0, timeout, commThreadCycleInMs);
   if(impl->cId >= 0)
@@ -315,21 +356,26 @@ void VREPRemoteAPIWrapper::startSimulation(mc_control::MCGlobalController & cont
   controller.running = false;
   impl->update();
   simxSynchronousTrigger(impl->cId);
+  LOG_SUCCESS("Simulation started")
 }
 
 void VREPRemoteAPIWrapper::nextSimulationStep(mc_control::MCGlobalController & controller)
 {
   /* Update sensor information */
   impl->update();
+  std::vector<double> qIn = impl->qIn();
   if(!controller.running)
   {
-    std::vector<double> qIn = impl->qIn();
     controller.init(qIn);
     controller.running = true;
   }
   else
   {
-    controller.setEncoderValues(impl->qIn());
+    controller.setEncoderValues(qIn);
+  }
+  if(controller.robot().name() == "hrp2_drc")
+  {
+    controller.setActualGripperQ(qIn[23], qIn[31]);
   }
   /* Send the update to the controller */
   controller.setWrenches(impl->wrenches());
@@ -337,6 +383,11 @@ void VREPRemoteAPIWrapper::nextSimulationStep(mc_control::MCGlobalController & c
   if(controller.run())
   {
     impl->qOut(controller);
+  }
+  else
+  {
+    simxStopSimulation(impl->cId, impl->opmode);
+    std::exit(1);
   }
   /* Trigger next simulation step */
   simxSynchronousTrigger(impl->cId);
