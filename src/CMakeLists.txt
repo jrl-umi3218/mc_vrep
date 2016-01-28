@@ -18,8 +18,6 @@ set(vrep_remote_api_hdr
 
 add_library(vrep_remote_api SHARED ${vrep_remote_api_hdr} ${vrep_remote_api_src})
 
-add_definitions("-std=c++0x")
-
 set(mc_vrep_src
   vrep_remote_api_wrapper.cpp
   mc_vrep_cli.cpp
@@ -32,6 +30,7 @@ if(NOT WIN32)
   target_link_libraries(mc_vrep pthread)
 endif()
 pkg_config_use_dependency(mc_vrep mc_rtc)
+set_target_properties(mc_vrep PROPERTIES COMPILE_FLAGS "-std=c++0x")
 
 install(TARGETS vrep_remote_api mc_vrep
   RUNTIME DESTINATION bin
