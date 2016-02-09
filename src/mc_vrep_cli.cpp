@@ -2,6 +2,8 @@
 
 #include <mc_rtc/logging.h>
 
+#include <boost/algorithm/string/trim.hpp>
+
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -115,12 +117,17 @@ void MCVREPCLI::run()
     ss >> token;
     if(token == "stop")
     {
-      LOG_INFO("Stopping simulation");;
+      LOG_INFO("Stopping simulation")
       done_ = true;
     }
     else if(cli_fn.count(token))
     {
-      bool ret = cli_fn[token](controller, ss);
+      std::string rem;
+      std::getline(ss, rem);
+      boost::algorithm::trim(rem);
+      std::stringstream ss2;
+      ss2 << rem;
+      bool ret = cli_fn[token](controller, ss2);
       if (!ret)
       {
         std::cerr << "Failed to invoke the previous command" << std::endl;

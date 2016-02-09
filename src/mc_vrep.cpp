@@ -27,7 +27,6 @@ int main(int argc, char * argv[])
     conf_file = argv[1];
   }
   mc_control::MCGlobalController controller(conf_file);
-  //mc_control::MCGlobalController controller("C:/Work/Code/Joris/mc_vrep/etc/mc_vrep.conf");
 
   /* Start the VREP remote API */
   VREPRemoteAPIWrapper vrep(controller.robot().name(), "127.0.0.1", 19997);
