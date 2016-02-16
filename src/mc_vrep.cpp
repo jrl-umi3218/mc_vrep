@@ -35,12 +35,8 @@ int main(int argc, char * argv[])
   vrep.startSimulation(controller);
 
   MCVREPCLI cli(controller);
-  std::thread th(std::bind(&simThread,
-                           std::ref<VREPRemoteAPIWrapper>(vrep),
-                           std::ref<mc_control::MCGlobalController>(controller),
-                           std::ref<MCVREPCLI>(cli)));
-
-  cli.run();
+  std::thread th(std::bind(&MCVREPCLI::run, &cli));
+  simThread(vrep, controller, cli);
 
   th.join();
   return 0;
