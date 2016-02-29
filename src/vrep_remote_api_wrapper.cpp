@@ -224,7 +224,7 @@ struct VREPRemoteAPIWrapperImpl
   {
     if(qOut_started)
     {
-      log << iter;
+      log << ++iter;
     }
     std::vector<double> res(REF_JOINT_ORDER.size());
     for(size_t i = 0; i < REF_JOINT_ORDER.size(); ++i)
@@ -275,6 +275,7 @@ struct VREPRemoteAPIWrapperImpl
         }
       }
     }
+    log << std::endl;
     if(controller.robot().name() == "hrp2_drc")
     {
       qOut_handles[MAIN_JOINTS.size()] = handles["RARM_JOINT7"];
