@@ -238,7 +238,7 @@ struct VREPRemoteAPIWrapperImpl
     return res;
   }
 
-  typedef std::pair<Eigen::Vector3d, Eigen::Vector3d> wrench_t;
+  typedef sva::ForceVecd wrench_t;
   std::vector<wrench_t> wrenches()
   {
     std::vector<wrench_t> res;
