@@ -76,7 +76,7 @@ We will assume that you installed VREP in the `$VREP_INSTALL_FOLDER`.
 
 Clone the [mc_vrep repository](https://gite.lirmm.fr/multi-contact/mc_vrep) and build it (cmake/make)
 
-Put the `extApiCustomConst.h` file located in the repository in `$VREP_INSTALL_FOLDER/programming/include`.
+Put the `extApiCustomConst.h` and `extApiCustom.h` files located in the repository in `$VREP_INSTALL_FOLDER/programming/include`.
 
 Put the `simxCustomCmd.cpp` file located in the repository in `$VREP_INSTALL_FOLDER/programming/v_repExtRemoteApi`, then `cd` to this folder, rebuild the `v_repExtRemoteApi` plugin (`make` on Linux/MacOS or using the provided Visual Studio solution for Windows) and copy the resulting library (`lib/libv_repExtRemoteApi.so`) in `$VREP_INSTALL_FOLDER` (overwriting the existing one).
 
