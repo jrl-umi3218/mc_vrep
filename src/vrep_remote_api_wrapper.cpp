@@ -59,8 +59,8 @@ struct VREPRemoteAPIWrapperImpl
     {
       REF_JOINT_ORDER = {
   //"Root"
-  "R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R",
-  "L_HIP_Y", "L_HIP_R", "L_HIP_P", "L_KNEE_P", "L_ANKLE_P", "L_ANKLE_R",
+  "R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R", "R_FOOT",
+  "L_HIP_Y", "L_HIP_R", "L_HIP_P", "L_KNEE_P", "L_ANKLE_P", "L_ANKLE_R", "L_FOOT",
   "CHEST_P", "CHEST_Y", "NECK_Y", "NECK_P", 
   "R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P", "R_WRIST_Y", "R_WRIST_P", "R_WRIST_R", 
   "R_HAND_J0", "R_HAND_J1", "R_F22", "R_F23", "R_F32", "R_F33", "R_F42", "R_F43", "R_F52", "R_F53", 
@@ -229,7 +229,10 @@ struct VREPRemoteAPIWrapperImpl
     std::vector<double> res(REF_JOINT_ORDER.size());
     for(size_t i = 0; i < REF_JOINT_ORDER.size(); ++i)
     {
-      res[i] = joints[REF_JOINT_ORDER[i]];
+      if(joints.count(REF_JOINT_ORDER[i]))
+      {
+        res[i] = joints[REF_JOINT_ORDER[i]];
+      }
       if(qOut_started)
       {
         log << " " << res[i];
