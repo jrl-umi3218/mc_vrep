@@ -13,28 +13,26 @@ namespace
 {
   bool open_grippers(mc_control::MCGlobalController & controller, std::stringstream&)
   {
-    controller.setGripperOpenPercent(1 , 1);
+    controller.setGripperOpenPercent(1);
     return true;
   }
 
   bool close_grippers(mc_control::MCGlobalController & controller, std::stringstream&)
   {
-    controller.setGripperOpenPercent(0 , 0);
+    controller.setGripperOpenPercent(0);
     return true;
   }
 
   bool set_gripper(mc_control::MCGlobalController & controller, std::stringstream & args)
   {
-    bool lgripper; double v;
-    args >> lgripper >> v;
-    if(lgripper)
+    std::string gripper; std::vector<double> v; double tmp;
+    args >> gripper;
+    while(args.good())
     {
-      controller.setLGripperTargetQ(v);
+      args >> tmp;
+      v.push_back(tmp);
     }
-    else
-    {
-      controller.setRGripperTargetQ(v);
-    }
+    controller.setGripperTargetQ(gripper, v);
     return true;
   }
 

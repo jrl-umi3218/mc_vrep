@@ -59,13 +59,13 @@ struct VREPRemoteAPIWrapperImpl
     {
       REF_JOINT_ORDER = {
   //"Root"
-  "R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R", "R_FOOT",
-  "L_HIP_Y", "L_HIP_R", "L_HIP_P", "L_KNEE_P", "L_ANKLE_P", "L_ANKLE_R", "L_FOOT",
+  "R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R",
+  "L_HIP_Y", "L_HIP_R", "L_HIP_P", "L_KNEE_P", "L_ANKLE_P", "L_ANKLE_R",
   "CHEST_P", "CHEST_Y", "NECK_Y", "NECK_P", 
-  "R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P", "R_WRIST_Y", "R_WRIST_P", "R_WRIST_R", 
-  "R_HAND_J0", "R_HAND_J1", "R_F22", "R_F23", "R_F32", "R_F33", "R_F42", "R_F43", "R_F52", "R_F53", 
-  "L_SHOULDER_P", "L_SHOULDER_R", "L_SHOULDER_Y", "L_ELBOW_P", "L_WRIST_Y", "L_WRIST_P", "L_WRIST_R", 
-  "L_HAND_J0", "L_HAND_J1", "L_F22", "L_F23", "L_F32", "L_F33", "L_F42", "L_F43", "L_F52", "L_F53"
+  "R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P", "R_WRIST_Y", "R_WRIST_P", "R_WRIST_R",
+  "R_HAND_J0", "R_HAND_J1",
+  "L_SHOULDER_P", "L_SHOULDER_R", "L_SHOULDER_Y", "L_ELBOW_P", "L_WRIST_Y", "L_WRIST_P", "L_WRIST_R",
+  "L_HAND_J0", "L_HAND_J1"
 };
 
       MAIN_JOINTS = {"R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R",
@@ -257,24 +257,37 @@ struct VREPRemoteAPIWrapperImpl
     const mc_control::QPResultMsg & res = controller.send(0);
     if(!qOut_started)
     {
-      qOut_handles.resize(MAIN_JOINTS.size() + 2);
-      qOut_positions.resize(MAIN_JOINTS.size() + 2);
+      if(controller.robot().name() == "hrp2_drc")
+      {
+        qOut_handles.resize(MAIN_JOINTS.size() + 2);
+        qOut_positions.resize(MAIN_JOINTS.size() + 2);
+      }
+      else if(controller.robot().name() == "hrp4")
+      {
+        qOut_handles.resize(MAIN_JOINTS.size() + 4);
+        qOut_positions.resize(MAIN_JOINTS.size() + 4);
+      }
+      else
+      {
+        qOut_handles.resize(MAIN_JOINTS.size());
+        qOut_positions.resize(MAIN_JOINTS.size());
+      }
     }
     for(size_t i = 0; i < MAIN_JOINTS.size(); ++i)
     {
       const std::string & jn = MAIN_JOINTS[i];
       qOut_handles[i] = handles[jn];
-      qOut_positions[i] = static_cast<float>(res.robots_state[0].q[6 + controller.robot().jointIndexByName(jn)]);
+      qOut_positions[i] = static_cast<float>(res.robots_state[0].q.at(jn)[0]);
       if(qOut_started)
       {
         log << " " << qOut_positions[i];
         if(jn == "RARM_JOINT6")
         {
-          log << " " << controller.gripperQ(false)[0];
+          log << " " << controller.gripperQ()["r_gripper"][0];
         }
         if(jn == "LARM_JOINT6")
         {
-          log << " " << controller.gripperQ(true)[0] << std::endl;
+          log << " " << controller.gripperQ()["l_gripper"][0] << std::endl;
         }
       }
     }
@@ -282,9 +295,21 @@ struct VREPRemoteAPIWrapperImpl
     if(controller.robot().name() == "hrp2_drc")
     {
       qOut_handles[MAIN_JOINTS.size()] = handles["RARM_JOINT7"];
-      qOut_positions[MAIN_JOINTS.size()] = controller.gripperQ(false)[0];
+      qOut_positions[MAIN_JOINTS.size()] = controller.gripperQ()["r_gripper"][0];
       qOut_handles[MAIN_JOINTS.size() + 1] = handles["LARM_JOINT7"];
-      qOut_positions[MAIN_JOINTS.size() + 1] = controller.gripperQ(true)[0];
+      qOut_positions[MAIN_JOINTS.size() + 1] = controller.gripperQ()["l_gripper"][0];
+    }
+    else if(controller.robot().name() == "hrp4")
+    {
+      qOut_handles[MAIN_JOINTS.size()] = handles["R_HAND_J0"];
+      qOut_handles[MAIN_JOINTS.size() + 1] = handles["R_HAND_J1"];
+      qOut_handles[MAIN_JOINTS.size() + 2] = handles["L_HAND_J0"];
+      qOut_handles[MAIN_JOINTS.size() + 3] = handles["L_HAND_J1"];
+      auto gQs = controller.gripperQ();
+      qOut_positions[MAIN_JOINTS.size()] = gQs["r_gripper"][0];
+      qOut_positions[MAIN_JOINTS.size() + 1] = gQs["r_gripper"][1];
+      qOut_positions[MAIN_JOINTS.size() + 2] = gQs["l_gripper"][0];
+      qOut_positions[MAIN_JOINTS.size() + 3] = gQs["l_gripper"][1];
     }
     simxCustomSetJointsTargetPositions(cId,
                                        static_cast<simxInt>(qOut_handles.size()),
@@ -377,16 +402,25 @@ void VREPRemoteAPIWrapper::nextSimulationStep(mc_control::MCGlobalController & c
   {
     controller.setEncoderValues(qIn);
   }
-  if(controller.robot().name() == "hrp2_drc")
-  {
-    controller.setActualGripperQ(qIn[23], qIn[31]);
-  }
   /* Send the update to the controller */
   controller.setWrenches(impl->wrenches());
   /* Run */
   if(controller.run())
   {
     impl->qOut(controller);
+    if(controller.robot().name() == "hrp2_drc")
+    {
+      controller.setActualGripperQ({
+              {"r_gripper", {qIn[23]}},
+              {"l_gripper", {qIn[31]}}});
+    }
+    else if(controller.robot().name() == "hrp4")
+    {
+      controller.setActualGripperQ({
+              {"l_gripper", {qIn[32], qIn[33]}},
+              {"r_gripper", {qIn[23], qIn[24]}}});
+
+    }
   }
   else
   {
