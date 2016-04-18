@@ -14,6 +14,7 @@ void simThread(VREPRemoteAPIWrapper & vrep, mc_control::MCGlobalController & con
   while(!cli.done())
   {
     vrep.nextSimulationStep(controller);
+    mc_rtc::ROSBridge::update_robot_publisher(controller.timestep(), controller.robot(), Eigen::Vector3d{}, Eigen::Vector3d{}, Eigen::Vector3d{}, Eigen::Vector3d{}, controller.gripperJoints(), controller.gripperQ());
   }
   vrep.stopSimulation();
 }
