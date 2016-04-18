@@ -10,6 +10,7 @@ extern "C"
 }
 
 #include <mc_rtc/logging.h>
+#include <mc_rtc/ros.h>
 
 #include <array>
 #include <fstream>
@@ -421,6 +422,7 @@ void VREPRemoteAPIWrapper::nextSimulationStep(mc_control::MCGlobalController & c
               {"r_gripper", {qIn[23], qIn[24]}}});
 
     }
+    mc_rtc::ROSBridge::update_robot_publisher(controller.timestep(), controller.robot(), Eigen::Vector3d{}, Eigen::Vector3d{}, Eigen::Vector3d{}, Eigen::Vector3d{}, controller.gripperJoints(), controller.gripperQ());
   }
   else
   {
