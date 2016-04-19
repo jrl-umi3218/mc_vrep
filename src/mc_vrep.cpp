@@ -3,7 +3,6 @@
 
 #include <mc_control/mc_global_controller.h>
 #include <mc_rtc/logging.h>
-#include <mc_rtc/ros.h>
 
 #include <cmath>
 #include <iostream>
