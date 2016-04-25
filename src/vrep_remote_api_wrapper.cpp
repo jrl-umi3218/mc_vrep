@@ -243,12 +243,12 @@ struct VREPRemoteAPIWrapperImpl
   }
 
   typedef sva::ForceVecd wrench_t;
-  std::vector<wrench_t> wrenches()
+  std::map<std::string, wrench_t> wrenches()
   {
-    std::vector<wrench_t> res;
+    std::map<std::string, wrench_t> res;
     for(const auto & fs : sensors)
     {
-      res.push_back({fs.second.force, fs.second.torque});
+      res.emplace(fs.first, wrench_t{fs.second.force, fs.second.torque});
     }
     return res;
   }
