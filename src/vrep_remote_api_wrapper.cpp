@@ -62,7 +62,7 @@ struct VREPRemoteAPIWrapperImpl
   //"Root"
   "R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R",
   "L_HIP_Y", "L_HIP_R", "L_HIP_P", "L_KNEE_P", "L_ANKLE_P", "L_ANKLE_R",
-  "CHEST_P", "CHEST_Y", "NECK_Y", "NECK_P", 
+  "CHEST_P", "CHEST_Y", "NECK_Y", "NECK_P",
   "R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P", "R_WRIST_Y", "R_WRIST_P", "R_WRIST_R",
   "R_HAND_J0", "R_HAND_J1",
   "L_SHOULDER_P", "L_SHOULDER_R", "L_SHOULDER_Y", "L_ELBOW_P", "L_WRIST_Y", "L_WRIST_P", "L_WRIST_R",
@@ -71,8 +71,8 @@ struct VREPRemoteAPIWrapperImpl
 
       MAIN_JOINTS = {"R_HIP_Y", "R_HIP_R","R_HIP_P", "R_KNEE_P", "R_ANKLE_P", "R_ANKLE_R",
   "L_HIP_Y", "L_HIP_R", "L_HIP_P", "L_KNEE_P", "L_ANKLE_P", "L_ANKLE_R",
-  "CHEST_P", "CHEST_Y", "NECK_Y", "NECK_P", 
-  "R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P", "R_WRIST_Y", "R_WRIST_P", "R_WRIST_R", 
+  "CHEST_P", "CHEST_Y", "NECK_Y", "NECK_P",
+  "R_SHOULDER_P", "R_SHOULDER_R", "R_SHOULDER_Y", "R_ELBOW_P", "R_WRIST_Y", "R_WRIST_P", "R_WRIST_R",
   "L_SHOULDER_P", "L_SHOULDER_R", "L_SHOULDER_Y", "L_ELBOW_P", "L_WRIST_Y", "L_WRIST_P", "L_WRIST_R"
 };
 
@@ -422,7 +422,6 @@ void VREPRemoteAPIWrapper::nextSimulationStep(mc_control::MCGlobalController & c
               {"r_gripper", {qIn[23], qIn[24]}}});
 
     }
-    mc_rtc::ROSBridge::update_robot_publisher(controller.timestep(), controller.robot(), Eigen::Vector3d{}, Eigen::Vector3d{}, Eigen::Vector3d{}, Eigen::Vector3d{}, controller.gripperJoints(), controller.gripperQ());
   }
   else
   {
