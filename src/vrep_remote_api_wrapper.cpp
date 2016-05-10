@@ -374,7 +374,10 @@ void VREPRemoteAPIWrapper::startSimulation(mc_control::MCGlobalController & cont
   std::vector<std::string> jnames;
   for(const auto & j : robot.mb().joints())
   {
-    jnames.push_back(j.name());
+    if(j.dof() > 0 && j.name() != "Root")
+    {
+      jnames.push_back(j.name());
+    }
   }
   impl->joint_handles(jnames);
   impl->sensor_handles(robot.forceSensorsByName());
