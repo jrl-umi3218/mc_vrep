@@ -1,4 +1,4 @@
-#include "vrep_remote_api_wrapper.h"
+#include "vrep_simulation.h"
 #include "mc_vrep_cli.h"
 
 #include <mc_control/mc_global_controller.h>
@@ -8,11 +8,11 @@
 #include <iostream>
 #include <thread>
 
-void simThread(VREPRemoteAPIWrapper & vrep, mc_control::MCGlobalController & controller, MCVREPCLI & cli)
+void simThread(VREPSimulation & vrep, MCVREPCLI & cli)
 {
   while(!cli.done())
   {
-    vrep.nextSimulationStep(controller);
+    vrep.nextSimulationStep();
   }
   vrep.stopSimulation();
 }
@@ -28,14 +28,14 @@ int main(int argc, char * argv[])
   mc_control::MCGlobalController controller(conf_file);
 
   /* Start the VREP remote API */
-  VREPRemoteAPIWrapper vrep(controller.robot().name(), "127.0.0.1", 19997);
+  VREPSimulation vrep(controller);
 
-  
-  vrep.startSimulation(controller);
+
+  vrep.startSimulation();
 
   MCVREPCLI cli(controller);
   std::thread th(std::bind(&MCVREPCLI::run, &cli));
-  simThread(vrep, controller, cli);
+  simThread(vrep, cli);
 
   th.join();
   return 0;
