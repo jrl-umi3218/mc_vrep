@@ -23,6 +23,7 @@ private:
   vrep::VREP::Accelerometer accel;
   vrep::VREP::Gyrometer gyro;
   sva::PTransformd basePos;
+  sva::MotionVecd baseVel;
 
   /* Gripper related */
   std::map<std::string, std::vector<size_t>> gripper_in_index;
@@ -92,7 +93,8 @@ public:
     /* Run simulation until the data arrives */
     while(! (vrep.getJointsData(controller.ref_joint_order(), jQs, jTorques) &&
              vrep.getSensorData(fSensors, accel, gyro) &&
-             vrep.getBasePos(baseName, basePos)) )
+             vrep.getBasePos(baseName, basePos) &&
+             vrep.getBaseVelocity(baseName, baseVel)) )
     {
       vrep.nextSimulationStep();
     }
@@ -116,6 +118,7 @@ public:
     Eigen::Vector3d rpy = basePos.rotation().eulerAngles(0, 1, 2);
     controller.setSensorPosition(pos);
     controller.setSensorOrientation(rpy);
+    controller.setSensorLinearVelocity(baseVel.linear());
     controller.setSensorAngularVelocity(gyro.data);
     controller.setSensorAcceleration(accel.data);
     controller.setEncoderValues(jQs);
@@ -128,6 +131,7 @@ public:
     vrep.getJointsData(controller.ref_joint_order(), jQs, jTorques);
     vrep.getSensorData(fSensors, accel, gyro);
     vrep.getBasePos(baseName, basePos);
+    vrep.getBaseVelocity(baseName, baseVel);
 
     updateData();
     if(controller.run())
