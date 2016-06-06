@@ -112,9 +112,11 @@ public:
 
   void updateData()
   {
+    Eigen::Vector3d pos = basePos.translation();
     Eigen::Vector3d rpy = basePos.rotation().eulerAngles(0, 1, 2);
+    controller.setSensorPosition(pos);
     controller.setSensorOrientation(rpy);
-    controller.setSensorVelocity(gyro.data);
+    controller.setSensorAngularVelocity(gyro.data);
     controller.setSensorAcceleration(accel.data);
     controller.setEncoderValues(jQs);
     controller.setWrenches(wrenches());
