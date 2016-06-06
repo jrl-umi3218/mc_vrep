@@ -58,7 +58,7 @@ public:
     std::map<std::string, wrench_t> res;
     for(const auto & fs : fSensors)
     {
-      res.emplace(fs.first, wrench_t{fs.second.force, fs.second.torque});
+      res.emplace(fs.first, wrench_t{fs.second.torque, fs.second.force});
     }
     return res;
   }
