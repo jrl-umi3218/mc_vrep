@@ -1,0 +1,6 @@
+INPUT                  = @CMAKE_SOURCE_DIR@/src
+IMAGE_PATH             = @CMAKE_SOURCE_DIR@/doc/pictures
+FILE_PATTERNS          = *.h *.idl
+TAGFILES = \
+"@VREP_API_WRAPPER_DOXYGENDOCDIR@/SpaceVecAlg.doxytag = @VREP_API_WRAPPER_DOXYGENDOCDIR@" \
+"@MC_RTC_DOXYGENDOCDIR@/RBDyn.doxytag = @MC_RTC_DOXYGENDOCDIR@"

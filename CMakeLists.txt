@@ -31,6 +31,7 @@ ENDIF()
 #if needed, set your conf path here
 #set(CONF_PATH "C:/Work/Code/Joris/mc_vrep/etc")
 
+add_required_dependency(vrep-api-wrapper)
 add_required_dependency(mc_rtc)
 
 add_subdirectory(src)
