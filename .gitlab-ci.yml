@@ -3,7 +3,7 @@ variables:
   APT_DEPENDENCIES: "libtinyxml2-dev libboost-all-dev libjsoncpp-dev libgeos++-dev libgeos-dev qhull-bin libqhull-dev libltdl-dev libspacevecalg-dev libeigen-qld-dev librbdyn-dev libsch-core-dev"
   GIT_DEPENDENCIES: "git@gite.lirmm.fr:multi-contact/eigen-lssol.git jrl-umi3218/Tasks git@gite.lirmm.fr:multi-contact/mc_rbdyn_urdf_cpp.git git@gite.lirmm.fr:multi-contact/mc_rtc git@gite.lirmm.fr:vrep-utils/vrep-api-wrapper.git"
   MASTER_PPA: "pierre-gergondet+ppa/multi-contact-unstable"
-  VREP_URL: "http://coppeliarobotics.com/V-REP_PRO_EDU_V3_3_1_64_Linux.tar.gz"
+  VREP_URL: "http://coppeliarobotics.com/files/V-REP_PRO_EDU_V3_3_1_64_Linux.tar.gz"
   VREP_ARCHIVE: "V-REP_PRO_EDU_V3_3_1_64_Linux.tar.gz"
   VREP_PATH: "/tmp/V-REP_PRO_EDU_V3_3_1_64_Linux"
 

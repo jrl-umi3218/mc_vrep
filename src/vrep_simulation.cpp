@@ -104,8 +104,7 @@ public:
     }
     controller.running = true;
     Eigen::Vector3d t(basePos.translation());
-    Eigen::Quaterniond q(basePos.rotation());
-    q = q.inverse();
+    Eigen::Quaterniond q(basePos.rotation().transpose());
     std::array<double, 7> initAttitude {{q.w(), q.x(), q.y(), q.z(), t.x(), t.y(), t.z()}};
     updateData();
     controller.init(jQs, initAttitude);
@@ -115,7 +114,7 @@ public:
   void updateData()
   {
     controller.setSensorPosition(basePos.translation());
-    controller.setSensorOrientation(Eigen::Quaterniond(basePos.rotation().inverse()));
+    controller.setSensorOrientation(Eigen::Quaterniond(basePos.rotation().transpose()));
     controller.setSensorLinearVelocity(baseVel.linear());
     controller.setSensorAngularVelocity(gyro.data);
     controller.setSensorAcceleration(accel.data);
