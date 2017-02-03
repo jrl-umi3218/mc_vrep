@@ -83,9 +83,9 @@ public:
       throw("Invalid robot");
     }
     baseName = vrep.getModelBase(jName);
-    for(const auto & fn : robot.forceSensorsByName())
+    for(const auto & fs : robot.forceSensors())
     {
-      fSensors[fn] = {};
+      fSensors[fs.name()] = {};
     }
     vrep.startSimulation(baseName,
                          controller.ref_joint_order(),
