@@ -114,7 +114,7 @@ public:
   void updateData()
   {
     controller.setSensorPosition(basePos.translation());
-    controller.setSensorOrientation(Eigen::Quaterniond(basePos.rotation().transpose()));
+    controller.setSensorOrientation(Eigen::Quaterniond(basePos.rotation()));
     controller.setSensorLinearVelocity(baseVel.linear());
     controller.setSensorAngularVelocity(gyro.data);
     controller.setSensorAcceleration(accel.data);
