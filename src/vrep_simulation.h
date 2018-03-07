@@ -46,6 +46,16 @@ public:
 
   /*! Stop the simulation */
   void stopSimulation();
+
+  /*! Add an external force to a respondable body. The force will be applied at
+   * each iteration until it is explicitely removed */
+  bool addExternalForce(const std::string& body_respondable, const sva::ForceVecd& force);
+  /*! Remove external force applied on a body */
+  bool removeExternalForce(const std::string& body_respondable);
+  /*! Add an impact force. The force will be applied for one iteration only,
+   * then removed immediately */
+  bool addImpactForce(const std::string& body_respondable, const sva::ForceVecd& force);
+
 private:
   std::unique_ptr<VREPSimulationImpl> impl;
 };

@@ -28,6 +28,10 @@ private:
   /* Gripper related */
   std::map<std::string, std::vector<size_t>> gripper_in_index;
   std::map<std::string, std::vector<double>> realGripperQs;
+
+  std::map<std::string, sva::ForceVecd> external_force;
+  std::map<std::string, sva::ForceVecd> impact_force;
+
 public:
   VREPSimulationImpl(mc_control::MCGlobalController & controller, const std::string & host, int port, int timeout, bool waitUntilConnected, bool doNotReconnect, int commThreadCycleInMs)
   : controller(controller), vrep(host, port, timeout, waitUntilConnected, doNotReconnect, commThreadCycleInMs)
@@ -63,7 +67,6 @@ public:
     }
     return res;
   }
-
 
   void startSimulation()
   {
@@ -123,12 +126,50 @@ public:
     controller.setJointTorques(jTorques);
   }
 
+  bool addExternalForce(const std::string& body_respondable, const sva::ForceVecd& force)
+  {
+    external_force[body_respondable] = force;
+    // XXX
+    return true;
+  }
+
+  bool removeExternalForce(const std::string& body_respondable)
+  {
+    if(external_force.count(body_respondable))
+    {
+      external_force.erase(body_respondable);
+      return true;
+    }
+    return false;
+  }
+
+  bool addImpactForce(const std::string& body_respondable, const sva::ForceVecd& force)
+  {
+    impact_force[body_respondable] = force;
+    // XXX
+    return true;
+  }
+
   void nextSimulationStep()
   {
     vrep.getJointsData(controller.ref_joint_order(), jQs, jTorques);
     vrep.getSensorData(fSensors, accel, gyro);
     vrep.getBasePos(baseName, basePos);
     vrep.getBaseVelocity(baseName, baseVel);
+
+    // Add external forces
+    for(const auto& f : external_force)
+    {
+      vrep.addForce(f.first, f.second);
+    }
+
+
+    // apply impact forces
+    for(const auto& f : impact_force)
+    {
+      vrep.addForce(f.first, f.second);
+    }
+    impact_force.clear();
 
     updateData();
     if(controller.run())
@@ -194,4 +235,18 @@ void VREPSimulation::nextSimulationStep()
 void VREPSimulation::stopSimulation()
 {
   impl->stopSimulation();
+}
+
+
+bool VREPSimulation::addExternalForce(const std::string& body_respondable, const sva::ForceVecd& force)
+{
+  return impl->addExternalForce(body_respondable, force);
+}
+bool VREPSimulation::removeExternalForce(const std::string& body_respondable)
+{
+  return impl->removeExternalForce(body_respondable);
+}
+bool VREPSimulation::addImpactForce(const std::string& body_respondable, const sva::ForceVecd& force)
+{
+  return impl->addImpactForce(body_respondable, force);
 }

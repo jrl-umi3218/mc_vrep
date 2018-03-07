@@ -11,19 +11,19 @@
 /* Anonymous namespace to hold the CLI functions */
 namespace
 {
-  bool open_grippers(mc_control::MCGlobalController & controller, std::stringstream&)
+  bool open_grippers(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream&)
   {
     controller.setGripperOpenPercent(1);
     return true;
   }
 
-  bool close_grippers(mc_control::MCGlobalController & controller, std::stringstream&)
+  bool close_grippers(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream&)
   {
     controller.setGripperOpenPercent(0);
     return true;
   }
 
-  bool set_gripper(mc_control::MCGlobalController & controller, std::stringstream & args)
+  bool set_gripper(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream & args)
   {
     std::string gripper; std::vector<double> v; double tmp;
     args >> gripper;
@@ -36,7 +36,7 @@ namespace
     return true;
   }
 
-  bool set_joint_pos(mc_control::MCGlobalController & controller, std::stringstream & args)
+  bool set_joint_pos(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream & args)
   {
     std::string jn;
     double v;
@@ -44,7 +44,7 @@ namespace
     return controller.set_joint_pos(jn, v);
   }
 
-  bool get_joint_pos(mc_control::MCGlobalController & controller, std::stringstream & args)
+  bool get_joint_pos(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream & args)
   {
     std::string jn;
     args >> jn;
@@ -60,36 +60,36 @@ namespace
 
   }
 
-  bool move_com(mc_control::MCGlobalController & controller, std::stringstream & args)
+  bool move_com(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream & args)
   {
     double x, y, z = 0;
     args >> x >> y >> z;
     return controller.move_com(Eigen::Vector3d(x,y,z));
   }
 
-  bool play_next_stance(mc_control::MCGlobalController & controller, std::stringstream &)
+  bool play_next_stance(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream &)
   {
     return controller.play_next_stance();
   }
 
-  bool GoToHalfSitPose(mc_control::MCGlobalController & controller, std::stringstream &)
+  bool GoToHalfSitPose(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream &)
   {
     return controller.GoToHalfSitPose_service();
   }
 
-  bool EnableController(mc_control::MCGlobalController & controller, std::stringstream &ss)
+  bool EnableController(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream &ss)
   {
     std::string controller_name;
     ss >> controller_name;
     return controller.EnableController(controller_name);
   }
 
-  bool send_msg(mc_control::MCGlobalController & controller, std::stringstream & args)
+  bool send_msg(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream & args)
   {
     return controller.send_msg(args.str());
   }
 
-  bool send_recv_msg(mc_control::MCGlobalController & controller, std::stringstream & args)
+  bool send_recv_msg(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream & args)
   {
     std::string out;
     bool r = controller.send_recv_msg(args.str(), out);
@@ -97,24 +97,53 @@ namespace
     return r;
   }
 
-  std::map<std::string, std::function<bool(mc_control::MCGlobalController&, std::stringstream&)>> cli_fn = {
-    {"set_joint_pos", std::bind(&set_joint_pos, std::placeholders::_1, std::placeholders::_2)},
-    {"get_joint_pos", std::bind(&get_joint_pos, std::placeholders::_1, std::placeholders::_2) },
-    {"open_grippers", std::bind(&open_grippers, std::placeholders::_1, std::placeholders::_2)},
-    {"close_grippers", std::bind(&close_grippers, std::placeholders::_1, std::placeholders::_2)},
-    {"set_gripper", std::bind(&set_gripper, std::placeholders::_1, std::placeholders::_2)},
-    {"move_com", std::bind(&move_com, std::placeholders::_1, std::placeholders::_2)},
-    {"play_next_stance", std::bind(&play_next_stance, std::placeholders::_1, std::placeholders::_2)},
-    {"GoToHalfSitPose", std::bind(&GoToHalfSitPose, std::placeholders::_1, std::placeholders::_2)},
-    {"half_sitting", std::bind(&GoToHalfSitPose, std::placeholders::_1, std::placeholders::_2)},
-    {"enable_controller", std::bind(&EnableController, std::placeholders::_1, std::placeholders::_2)},
-    {"send_msg", std::bind(&send_msg, std::placeholders::_1, std::placeholders::_2)},
-    {"send_recv_msg", std::bind(&send_recv_msg, std::placeholders::_1, std::placeholders::_2)}
+  bool add_external_force(mc_control::MCGlobalController&, VREPSimulation& vrep, std::stringstream & args)
+  {
+    std::string body;
+    double fx, fy, fz, cx, cy, cz;
+    args >> body >> fx >> fy >> fz >> cx >> cy >> cz;
+    sva::ForceVecd f(Eigen::Vector3d{cx, cy, cz}, Eigen::Vector3d{fx, fy, fz});
+    return vrep.addExternalForce(body, f);
+  }
+
+
+  bool remove_external_force(mc_control::MCGlobalController&, VREPSimulation& vrep, std::stringstream & args)
+  {
+    std::string body;
+    args >> body;
+    return vrep.removeExternalForce(body);
+  }
+
+  bool add_impact_force(mc_control::MCGlobalController&, VREPSimulation& vrep, std::stringstream & args)
+  {
+    std::string body;
+    double fx, fy, fz, cx, cy, cz;
+    args >> body >> fx >> fy >> fz >> cx >> cy >> cz;
+    sva::ForceVecd f(Eigen::Vector3d{cx, cy, cz}, Eigen::Vector3d{fx, fy, fz});
+    return vrep.addImpactForce(body, f);
+  }
+
+
+  std::map<std::string, std::function<bool(mc_control::MCGlobalController&, VREPSimulation&, std::stringstream&)>> cli_fn = {
+    {"set_joint_pos", std::bind(&set_joint_pos, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"get_joint_pos", std::bind(&get_joint_pos, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3) },
+    {"open_grippers", std::bind(&open_grippers, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"close_grippers", std::bind(&close_grippers, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"set_gripper", std::bind(&set_gripper, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"move_com", std::bind(&move_com, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"play_next_stance", std::bind(&play_next_stance, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"GoToHalfSitPose", std::bind(&GoToHalfSitPose, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"half_sitting", std::bind(&GoToHalfSitPose, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"enable_controller", std::bind(&EnableController, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"send_msg", std::bind(&send_msg, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"send_recv_msg", std::bind(&send_recv_msg, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"add_external_force", std::bind(&add_external_force, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"add_impact_force", std::bind(&add_impact_force, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)}
   };
 }
 
-MCVREPCLI::MCVREPCLI(mc_control::MCGlobalController & controller)
-: controller(controller)
+MCVREPCLI::MCVREPCLI(mc_control::MCGlobalController & controller, VREPSimulation& vrep)
+: controller(controller), vrep(vrep)
 {
 }
 
@@ -140,7 +169,7 @@ void MCVREPCLI::run()
       boost::algorithm::trim(rem);
       std::stringstream ss2;
       ss2 << rem;
-      bool ret = cli_fn[token](controller, ss2);
+      bool ret = cli_fn[token](controller, vrep, ss2);
       if (!ret)
       {
         std::cerr << "Failed to invoke the previous command" << std::endl;
