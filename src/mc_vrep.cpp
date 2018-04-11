@@ -20,7 +20,7 @@ void simThread(VREPSimulation & vrep, MCVREPCLI & cli)
 int main(int argc, char * argv[])
 {
   /* Create a global controller */
-  std::string conf_file = mc_rtc::CONF_PATH;
+  std::string conf_file = "";
   if(argc > 1)
   {
     conf_file = argv[1];
