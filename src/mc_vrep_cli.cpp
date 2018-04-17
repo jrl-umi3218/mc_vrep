@@ -101,7 +101,7 @@ namespace
   {
     std::string body;
     double fx, fy, fz, cx, cy, cz;
-    args >> body >> fx >> fy >> fz >> cx >> cy >> cz;
+    args >> body >> cx >> cy >> cz >> fx >> fy >> fz;
     sva::ForceVecd f(Eigen::Vector3d{cx, cy, cz}, Eigen::Vector3d{fx, fy, fz});
     return vrep.addExternalForce(body, f);
   }
@@ -118,7 +118,7 @@ namespace
   {
     std::string body;
     double fx, fy, fz, cx, cy, cz;
-    args >> body >> fx >> fy >> fz >> cx >> cy >> cz;
+    args >> body >> cx >> cy >> cz >> fx >> fy >> fz;
     sva::ForceVecd f(Eigen::Vector3d{cx, cy, cz}, Eigen::Vector3d{fx, fy, fz});
     return vrep.addImpactForce(body, f);
   }
