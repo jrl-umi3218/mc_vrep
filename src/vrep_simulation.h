@@ -52,7 +52,7 @@ public:
    *
    * \param body_respondable Name of respondable body in V-REP scene
    *
-   * \param force External force to apply
+   * \param force External force in world frame
    *
    */
   bool setExternalForce(const std::string& body_respondable, const sva::ForceVecd& force);
@@ -69,8 +69,8 @@ public:
    *
    * \param body_respondable Name of respondable body in V-REP scene
    *
-   * \param imapct Impact vector, i.e. impact = force * dt where dt is the
-   * simulation timestep here
+   * \param impact Impact vector in world frame (impact = force * dt where dt is the
+   * simulation time step)
    *
    */
   bool applyImpact(const std::string& body_respondable, const sva::ForceVecd& impact);
