@@ -126,10 +126,9 @@ public:
     controller.setJointTorques(jTorques);
   }
 
-  bool addExternalForce(const std::string& body_respondable, const sva::ForceVecd& force)
+  bool setExternalForce(const std::string& body_respondable, const sva::ForceVecd& force)
   {
     external_force[body_respondable] = force;
-    // XXX
     return true;
   }
 
@@ -143,10 +142,9 @@ public:
     return false;
   }
 
-  bool addImpactForce(const std::string& body_respondable, const sva::ForceVecd& force)
+  bool applyImpact(const std::string& body_respondable, const sva::ForceVecd& impact)
   {
-    impact_force[body_respondable] = force;
-    // XXX
+    impact_force[body_respondable] = impact / controller.timestep();
     return true;
   }
 
@@ -162,7 +160,6 @@ public:
     {
       vrep.addForce(f.first, f.second);
     }
-
 
     // apply impact forces
     for(const auto& f : impact_force)
@@ -237,16 +234,17 @@ void VREPSimulation::stopSimulation()
   impl->stopSimulation();
 }
 
-
-bool VREPSimulation::addExternalForce(const std::string& body_respondable, const sva::ForceVecd& force)
+bool VREPSimulation::setExternalForce(const std::string& body_respondable, const sva::ForceVecd& force)
 {
-  return impl->addExternalForce(body_respondable, force);
+  return impl->setExternalForce(body_respondable, force);
 }
+
 bool VREPSimulation::removeExternalForce(const std::string& body_respondable)
 {
   return impl->removeExternalForce(body_respondable);
 }
-bool VREPSimulation::addImpactForce(const std::string& body_respondable, const sva::ForceVecd& force)
+
+bool VREPSimulation::applyImpact(const std::string& body_respondable, const sva::ForceVecd& impact)
 {
-  return impl->addImpactForce(body_respondable, force);
+  return impl->applyImpact(body_respondable, impact);
 }

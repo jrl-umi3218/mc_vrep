@@ -97,15 +97,14 @@ namespace
     return r;
   }
 
-  bool add_external_force(mc_control::MCGlobalController&, VREPSimulation& vrep, std::stringstream & args)
+  bool set_external_force(mc_control::MCGlobalController&, VREPSimulation& vrep, std::stringstream & args)
   {
     std::string body;
     double fx, fy, fz, cx, cy, cz;
     args >> body >> cx >> cy >> cz >> fx >> fy >> fz;
     sva::ForceVecd f(Eigen::Vector3d{cx, cy, cz}, Eigen::Vector3d{fx, fy, fz});
-    return vrep.addExternalForce(body, f);
+    return vrep.setExternalForce(body, f);
   }
-
 
   bool remove_external_force(mc_control::MCGlobalController&, VREPSimulation& vrep, std::stringstream & args)
   {
@@ -114,13 +113,13 @@ namespace
     return vrep.removeExternalForce(body);
   }
 
-  bool add_impact_force(mc_control::MCGlobalController&, VREPSimulation& vrep, std::stringstream & args)
+  bool apply_impact(mc_control::MCGlobalController&, VREPSimulation& vrep, std::stringstream & args)
   {
     std::string body;
     double fx, fy, fz, cx, cy, cz;
     args >> body >> cx >> cy >> cz >> fx >> fy >> fz;
     sva::ForceVecd f(Eigen::Vector3d{cx, cy, cz}, Eigen::Vector3d{fx, fy, fz});
-    return vrep.addImpactForce(body, f);
+    return vrep.applyImpact(body, f);
   }
 
 
@@ -137,8 +136,9 @@ namespace
     {"enable_controller", std::bind(&EnableController, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
     {"send_msg", std::bind(&send_msg, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
     {"send_recv_msg", std::bind(&send_recv_msg, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
-    {"add_external_force", std::bind(&add_external_force, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
-    {"add_impact_force", std::bind(&add_impact_force, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)}
+    {"set_external_force", std::bind(&set_external_force, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"remove_external_force", std::bind(&remove_external_force, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
+    {"apply_impact", std::bind(&apply_impact, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)}
   };
 }
 
