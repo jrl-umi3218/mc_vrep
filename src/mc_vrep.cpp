@@ -33,7 +33,7 @@ int main(int argc, char * argv[])
 
   vrep.startSimulation();
 
-  MCVREPCLI cli(controller);
+  MCVREPCLI cli(controller, vrep);
   std::thread th(std::bind(&MCVREPCLI::run, &cli));
   simThread(vrep, cli);
 

@@ -46,6 +46,35 @@ public:
 
   /*! Stop the simulation */
   void stopSimulation();
+
+  /*! Apply an external force to a respondable body. The force will be applied at
+   * each iteration until it is explicitely removed.
+   *
+   * \param body_respondable Name of respondable body in V-REP scene
+   *
+   * \param force External force in world frame
+   *
+   */
+  bool setExternalForce(const std::string& body_respondable, const sva::ForceVecd& force);
+
+  /*! Remove external force applied on a respondable body.
+   *
+   * \param body_respondable Name of respondable body in V-REP scene
+   *
+   */
+  bool removeExternalForce(const std::string& body_respondable);
+
+  /*! Add an external impact force. The force will be applied for one iteration only,
+   * then removed immediately.
+   *
+   * \param body_respondable Name of respondable body in V-REP scene
+   *
+   * \param impact Impact vector in world frame (impact = force * dt where dt is the
+   * simulation time step)
+   *
+   */
+  bool applyImpact(const std::string& body_respondable, const sva::ForceVecd& impact);
+
 private:
   std::unique_ptr<VREPSimulationImpl> impl;
 };
