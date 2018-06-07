@@ -55,6 +55,56 @@ public:
         }
       }
     }
+    auto & ctl = controller.controller();
+    auto gui = ctl.gui();
+    if(gui)
+    {
+      auto data = gui->data();
+      auto vrep_data = data.add("VREP");
+      auto vrep_bodies = vrep_data.array("bodies");
+      for(auto & b : ctl.robot().mb().bodies())
+      {
+        if(b.inertia().mass() != 0)
+        {
+          vrep_bodies.push(b.name() + "_respondable");
+        }
+      }
+      gui->addElement({"VREP", "Force"},
+        mc_rtc::gui::Form("Apply force",
+                          [this,gui](const mc_rtc::Configuration & data)
+                          {
+                            std::string body = data("Body");
+                            Eigen::Vector6d force = data("Force");
+                            setExternalForce(body, {force});
+                            gui->addElement({"VREP", "Force"},
+                              mc_rtc::gui::Button("Remove force on " + body,
+                                                  [this,body,gui]()
+                                                  {
+                                                    removeExternalForce(body);
+                                                    gui->removeElement({"VREP", "Force"}, "Remove force on " + body);
+                                                  }
+                                                  )
+                            );
+                          },
+                          mc_rtc::gui::FormDataComboInput("Body", true, {"VREP", "bodies"}),
+                          mc_rtc::gui::FormArrayInput<Eigen::Vector6d>("Force", true, Eigen::Vector6d::Zero())
+                         )
+        );
+      gui->addElement({"VREP", "Impact"},
+        mc_rtc::gui::Form("Apply impact",
+                          [this,gui](const mc_rtc::Configuration & data)
+                          {
+                            std::string body = data("Body");
+                            Eigen::Vector6d force = data("Force (N.s)");
+                            applyImpact(body, {force});
+                          },
+                          mc_rtc::gui::FormDataComboInput("Body", true, {"VREP", "bodies"}),
+                          mc_rtc::gui::FormArrayInput<Eigen::Vector6d>("Force (N.s)", true, Eigen::Vector6d::Zero())
+                         )
+      );
+      gui->addElement({"VREP"},
+                      mc_rtc::gui::Button("Stop", [this](){ stopSimulation(); std::exit(0); }));
+    }
   }
 
   typedef sva::ForceVecd wrench_t;
