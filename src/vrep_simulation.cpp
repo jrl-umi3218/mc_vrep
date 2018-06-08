@@ -71,15 +71,19 @@ public:
       }
       gui->addElement({"VREP", "Force"},
         mc_rtc::gui::Form("Apply force",
-                          [this,gui](const mc_rtc::Configuration & data)
+                          [this,gui,&ctl](const mc_rtc::Configuration & data)
                           {
                             std::string body = data("Body");
+                            std::string msg = "addForce " + body; 
+                            ctl.read_msg(msg);
                             Eigen::Vector6d force = data("Force");
                             setExternalForce(body, {force});
                             gui->addElement({"VREP", "Force"},
                               mc_rtc::gui::Button("Remove force on " + body,
-                                                  [this,body,gui]()
+                                                  [this,body,gui,&ctl]()
                                                   {
+                                                    std::string msg = "removeForce " + body; 
+                                                    ctl.read_msg(msg);
                                                     removeExternalForce(body);
                                                     gui->removeElement({"VREP", "Force"}, "Remove force on " + body);
                                                   }
