@@ -125,6 +125,11 @@ public:
   void startSimulation()
   {
     const mc_rbdyn::Robot & robot = controller.robot();
+    const auto & robots = controller.controller().robots();
+    for(size_t i = controller.realRobots().size(); i < robots.size(); ++i)
+    {
+      controller.realRobots().robotCopy(robots.robot(i));
+    }
     std::string jName = "";
     for(const auto & j : robot.mb().joints())
     {
@@ -208,6 +213,17 @@ public:
     vrep.getSensorData(fSensors, accel, gyro);
     vrep.getBasePos(baseName, basePos);
     vrep.getBaseVelocity(baseName, baseVel);
+    for(size_t i = 1; i < controller.realRobots().size(); ++i)
+    {
+      auto & r = controller.realRobots().robot(i);
+      if(r.mb().nrDof() == 0) { continue; }
+      sva::PTransformd r_pos;
+      if(!vrep.getBodyPos(r.mb().body(1).name(), r_pos))
+      {
+        std::cout << "Failed to get pos for " << r.mb().body(1).name() << "\n";
+      }
+      r.posW(r_pos);
+    }
 
     // Add external forces
     for(const auto& f : external_force)
