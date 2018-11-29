@@ -11,8 +11,13 @@ public:
   void run();
 
   bool done() const;
+
+  bool next() const;
+
+  void play();
 private:
   mc_control::MCGlobalController & controller;
   VREPSimulation & vrep;
   bool done_ = false;
+  bool next_ = false;
 };

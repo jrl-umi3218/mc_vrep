@@ -162,6 +162,10 @@ void MCVREPCLI::run()
       LOG_INFO("Stopping simulation")
       done_ = true;
     }
+    else if(token == "next" || token == "n")
+    {
+      next_ = true;
+    }
     else if(cli_fn.count(token))
     {
       std::string rem;
@@ -185,4 +189,14 @@ void MCVREPCLI::run()
 bool MCVREPCLI::done() const
 {
   return done_;
+}
+
+bool MCVREPCLI::next() const
+{
+  return next_;
+}
+
+void MCVREPCLI::play()
+{
+  next_ = false;
 }
