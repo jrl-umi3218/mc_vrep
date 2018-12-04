@@ -216,6 +216,7 @@ public:
       robot.bodySensor().angularVelocity(baseVels[i].angular());
       std::vector<double> encoders(robot.refJointOrder().size());
       std::vector<double> torques(robot.refJointOrder().size());
+      std::vector<double> prevEncoders = robot.encoderValues();
       for(size_t j = 0; j < robot.refJointOrder().size(); ++j)
       {
         encoders[j] = jQs[jQi + j];
@@ -225,6 +226,30 @@ public:
       robot.encoderValues(encoders);
       robot.jointTorques(jTorques);
       controller.setWrenches(rIdx[i], wrenches(robot, suffixes[i]));
+      auto & real_robot = controller.realRobots().robot(rIdx[i]);
+      real_robot.encoderValues(encoders);
+      if(prevEncoders.size() == 0) { prevEncoders = robot.encoderValues(); }
+      if(robot.mb().joint(0).type() == rbd::Joint::Type::Free)
+      {
+        real_robot.mbc().alpha[0] = {
+          baseVels[i].angular().x(),
+          baseVels[i].angular().y(),
+          baseVels[i].angular().z(),
+          baseVels[i].linear().x(),
+          baseVels[i].linear().y(),
+          baseVels[i].linear().z()
+        };
+      }
+      for(size_t j = 0; j < robot.refJointOrder().size(); ++j)
+      {
+        const auto & jN = robot.refJointOrder()[j];
+        if(robot.hasJoint(jN))
+        {
+          auto jIndex = robot.jointIndexByName(jN);
+          real_robot.mbc().alpha[jIndex][0] = (encoders[j] - prevEncoders[j])/0.005;
+        }
+      }
+      real_robot.posW(basePoses[i]);
     }
     controller.setSensorAcceleration(accel.data);
   }
