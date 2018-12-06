@@ -246,10 +246,12 @@ public:
         if(robot.hasJoint(jN))
         {
           auto jIndex = robot.jointIndexByName(jN);
+          real_robot.mbc().q[jIndex][0] = encoders[j];
           real_robot.mbc().alpha[jIndex][0] = (encoders[j] - prevEncoders[j])/0.005;
         }
       }
       real_robot.posW(basePoses[i]);
+      real_robot.forwardVelocity();
     }
     controller.setSensorAcceleration(accel.data);
   }
