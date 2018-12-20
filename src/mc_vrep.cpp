@@ -42,6 +42,11 @@ int main(int argc, char * argv[])
     vrep_c("WaitUntilConnected", config.waitUntilConnected);
     vrep_c("DoNotReconnect", config.doNotReconnect);
     vrep_c("CommThreadCycleInMs", config.commThreadCycleInMs);
+    vrep_c("SimulationTimestep", config.simulationTimestep);
+    if(config.simulationTimestep < 0)
+    {
+      config.simulationTimestep = controller.timestep();
+    }
     vrep_c("StepByStep", config.stepByStep);
     vrep_c("TorqueControl", config.torqueControl);
     if(vrep_c.has("Extras"))

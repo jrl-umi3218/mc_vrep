@@ -39,8 +39,11 @@ private:
   std::map<std::string, sva::ForceVecd> external_force;
   std::map<std::string, sva::ForceVecd> impact_force;
 
+  double simulationTimestep = 0.005;
+  size_t iter = 0;
+  size_t frameskip = 1;
 public:
-  VREPSimulationImpl(mc_control::MCGlobalController & controller, bool torqueControl, const std::string & host, int port, int timeout, bool waitUntilConnected, bool doNotReconnect, int commThreadCycleInMs, const std::vector<VREPSimulationConfiguration::ExtraRobot> & extraRobots)
+  VREPSimulationImpl(mc_control::MCGlobalController & controller, bool torqueControl, const std::string & host, int port, int timeout, bool waitUntilConnected, bool doNotReconnect, int commThreadCycleInMs, const std::vector<VREPSimulationConfiguration::ExtraRobot> & extraRobots, double simulationTimestep)
   : controller(controller), vrep(host, port, timeout, waitUntilConnected, doNotReconnect, commThreadCycleInMs), torqueControl(torqueControl), extraRobots(extraRobots)
   {
     auto gripperJs = controller.gripperJoints();
@@ -116,6 +119,10 @@ public:
       gui->addElement({"VREP"},
                       mc_rtc::gui::Button("Stop", [this](){ stopSimulation(); std::exit(0); }));
     }
+
+    this->simulationTimestep = simulationTimestep;
+    frameskip = std::round(ctl.timeStep / simulationTimestep);
+    LOG_INFO("[mc_vrep] Frameskip: " << frameskip)
   }
 
   typedef sva::ForceVecd wrench_t;
@@ -281,72 +288,76 @@ public:
   void nextSimulationStep()
   {
     float startT = vrep.getSimulationTime();
-    static float prevT = startT - 0.005;
-    if(fabs(startT - prevT - 0.005) > 1e-4)
+    static float prevT = startT - simulationTimestep;
+    if(fabs(startT - prevT - simulationTimestep) > 1e-4)
     {
       std::cerr << "Missed a simulation step " << startT << " " << prevT << "\n";
     }
     prevT = startT;
-    vrep.getSimulationState(joints, jQs, jTorques, fSensors, accel, gyro, baseNames, basePoses, baseVels);
-
-    // Add external forces
-    for(const auto& f : external_force)
+    if(iter % frameskip == 0)
     {
-      vrep.addForce(f.first, f.second);
-    }
+      vrep.getSimulationState(joints, jQs, jTorques, fSensors, accel, gyro, baseNames, basePoses, baseVels);
 
-    // apply impact forces
-    for(const auto& f : impact_force)
-    {
-      vrep.addForce(f.first, f.second);
-    }
-    impact_force.clear();
-
-    updateData();
-    if(controller.run())
-    {
-      /*FIXME Gripper control stuff*/
-      auto gripperQs = controller.gripperQ();
-      for(auto & rG : realGripperQs)
+      // Add external forces
+      for(const auto& f : external_force)
       {
-        const auto & idx = gripper_in_index[rG.first];
-        auto & qs = rG.second;
-        for(size_t i = 0; i < idx.size(); ++i)
-        {
-          qs[i] = jQs[idx[i]];
-        }
+        vrep.addForce(f.first, f.second);
       }
-      controller.setActualGripperQ(realGripperQs);
 
-      auto mbc = controller.robot().mbc();
-      auto gripperJs = controller.gripperJoints();
-      for(const auto & gQ : gripperQs)
+      // apply impact forces
+      for(const auto& f : impact_force)
       {
-        const auto & qs = gQ.second;
-        const auto & jns = gripperJs[gQ.first];
-        for(size_t i = 0; i < qs.size(); ++i)
+        vrep.addForce(f.first, f.second);
+      }
+      impact_force.clear();
+
+      updateData();
+      if(controller.run())
+      {
+        /*FIXME Gripper control stuff*/
+        auto gripperQs = controller.gripperQ();
+        for(auto & rG : realGripperQs)
         {
-          if(controller.robot().hasJoint(jns[i]))
+          const auto & idx = gripper_in_index[rG.first];
+          auto & qs = rG.second;
+          for(size_t i = 0; i < idx.size(); ++i)
           {
-            auto idx = controller.robot().jointIndexByName(jns[i]);
-            mbc.q[idx][0] = qs[i];
+            qs[i] = jQs[idx[i]];
+          }
+        }
+        controller.setActualGripperQ(realGripperQs);
+
+        auto mbc = controller.robot().mbc();
+        auto gripperJs = controller.gripperJoints();
+        for(const auto & gQ : gripperQs)
+        {
+          const auto & qs = gQ.second;
+          const auto & jns = gripperJs[gQ.first];
+          for(size_t i = 0; i < qs.size(); ++i)
+          {
+            if(controller.robot().hasJoint(jns[i]))
+            {
+              auto idx = controller.robot().jointIndexByName(jns[i]);
+              mbc.q[idx][0] = qs[i];
+            }
+          }
+        }
+        for(size_t i = 0; i < rIdx.size(); ++i)
+        {
+          auto & robot = controller.controller().robots().robot(rIdx[i]);
+          const auto & suffix = suffixes[i];
+          if(!torqueControl)
+          {
+            vrep.setRobotTargetConfiguration(robot.mb(), robot.mbc(), suffix);
+          }
+          else
+          {
+            vrep.setRobotTargetTorque(robot.mb(), robot.mbc(), suffix);
           }
         }
       }
-      for(size_t i = 0; i < rIdx.size(); ++i)
-      {
-        auto & robot = controller.controller().robots().robot(rIdx[i]);
-        const auto & suffix = suffixes[i];
-        if(!torqueControl)
-        {
-          vrep.setRobotTargetConfiguration(robot.mb(), robot.mbc(), suffix);
-        }
-        else
-        {
-          vrep.setRobotTargetTorque(robot.mb(), robot.mbc(), suffix);
-        }
-      }
     }
+    iter++;
     float endT = vrep.getSimulationTime();
     if(endT != startT)
     {
@@ -362,7 +373,7 @@ public:
 };
 
 VREPSimulation::VREPSimulation(mc_control::MCGlobalController & controller, const VREPSimulationConfiguration & config)
-: impl(new VREPSimulationImpl(controller, config.torqueControl, config.host, config.port, config.timeout, config.waitUntilConnected, config.doNotReconnect, config.commThreadCycleInMs, config.extras))
+: impl(new VREPSimulationImpl(controller, config.torqueControl, config.host, config.port, config.timeout, config.waitUntilConnected, config.doNotReconnect, config.commThreadCycleInMs, config.extras, config.simulationTimestep))
 {
 }
 

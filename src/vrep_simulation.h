@@ -25,6 +25,8 @@ struct VREPSimulationConfiguration
   bool doNotReconnect = true;
   /** See vrep::VREP documentation */
   int commThreadCycleInMs = 1;
+  /** Simulation timestep, defaults to the controller timestep if not provided */
+  double simulationTimestep = -1;
   /** If true, run the simulation step by step */
   bool stepByStep = false;
   /** If true, use computed torques as control input rather than joint position */
