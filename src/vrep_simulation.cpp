@@ -161,6 +161,7 @@ public:
       const auto & suffix = suffixes[i];
       const auto & robot = robots.robot(rIdx[i]);
       std::string jName = "";
+      std::string baseName = jName;
       for(const auto & j : robot.mb().joints())
       {
         if(j.dof() == 1)
@@ -175,10 +176,21 @@ public:
       }
       else if(jName == "")
       {
-        LOG_WARNING("ExtraRobot with index " << i << " cannot be controlled")
-        continue;
+        if(robot.mb().bodies().size() > 1 && robot.mb().body(0).name() == "base_link")
+        {
+          baseName = robot.mb().body(1).name();
+        }
+        else
+        {
+          baseName = robot.mb().body(0).name();
+        }
+        LOG_WARNING("ExtraRobot with index " << i << " cannot be controlled, will only track the base position " << baseName)
       }
-      baseNames.push_back(vrep.getModelBase(jName + suffix));
+      else
+      {
+        baseName = jName + suffix;
+      }
+      baseNames.push_back(baseName);
       for(const auto & fs : robot.forceSensors())
       {
         fSensors[fs.name() + suffix] = {};
