@@ -188,7 +188,7 @@ public:
       }
       else
       {
-        baseName = jName + suffix;
+        baseName = vrep.getModelBase(jName + suffix);
       }
       baseNames.push_back(baseName);
       for(const auto & fs : robot.forceSensors())
