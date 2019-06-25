@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ */
+
 #pragma once
 
 #include <mc_control/mc_global_controller.h>
@@ -11,8 +15,13 @@ public:
   void run();
 
   bool done() const;
+
+  bool next() const;
+
+  void play();
 private:
   mc_control::MCGlobalController & controller;
   VREPSimulation & vrep;
   bool done_ = false;
+  bool next_ = false;
 };

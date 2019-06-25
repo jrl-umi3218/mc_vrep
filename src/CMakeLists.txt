@@ -1,5 +1,6 @@
-# Needed by VREP API
-add_definitions(-DNON_MATLAB_PARSING -DMAX_EXT_API_CONNECTIONS=255)
+#
+# Copyright 2015-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+#
 
 set(mc_vrep_src
   vrep_simulation.cpp
@@ -8,12 +9,7 @@ set(mc_vrep_src
 )
 
 add_executable(mc_vrep ${mc_vrep_src})
-if(NOT WIN32)
-  target_link_libraries(mc_vrep pthread)
-endif()
-pkg_config_use_dependency(mc_vrep vrep-api-wrapper)
-pkg_config_use_dependency(mc_vrep mc_rtc)
-set_target_properties(mc_vrep PROPERTIES COMPILE_FLAGS "-std=c++0x")
+target_link_libraries(mc_vrep PUBLIC vrep-api-wrapper::vrep-api-wrapper mc_rtc::mc_control)
 
 install(TARGETS mc_vrep
   RUNTIME DESTINATION bin

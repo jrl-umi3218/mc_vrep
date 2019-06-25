@@ -1,3 +1,7 @@
+/*
+ * Copyright 2015-2019 CNRS-UM LIRMM, CNRS-AIST JRL
+ */
+
 #pragma once
 
 #include <memory>
@@ -9,6 +13,37 @@
 #include <mc_rtc/config.h>
 
 struct VREPSimulationImpl;
+
+/** Configuration for the connection to VREP and the simulation */
+struct VREPSimulationConfiguration
+{
+  /** See vrep::VREP documentation */
+  std::string host = "127.0.0.1";
+  /** See vrep::VREP documentation */
+  int port = 19997;
+  /** See vrep::VREP documentation */
+  int timeout = 3000;
+  /** See vrep::VREP documentation */
+  bool waitUntilConnected = true;
+  /** See vrep::VREP documentation */
+  bool doNotReconnect = true;
+  /** See vrep::VREP documentation */
+  int commThreadCycleInMs = 1;
+  /** Simulation timestep, defaults to the controller timestep if not provided */
+  double simulationTimestep = -1;
+  /** If true, run the simulation step by step */
+  bool stepByStep = false;
+  /** If true, use computed torques as control input rather than joint position */
+  bool torqueControl = false;
+  /** Configuration for extra-robots */
+  struct ExtraRobot
+  {
+    unsigned int index;
+    std::string suffix;
+  };
+  /** Suffix to apply given a robot index */
+  std::vector<ExtraRobot> extras = {};
+};
 
 /*! \brief This class is a thin wrapper around the
  * vrep-api-wrapper to drive a simulation in VREP using the
@@ -22,14 +57,10 @@ public:
    * Prepare to start a simulation.
    *
    * \param controller The mc_rtc controller instance used in the simulation.
-   * \param host See vrep::VREP documentation
-   * \param port See vrep::VREP documentation
-   * \param timeout See vrep::VREP documentation
-   * \param waitUntilConnected See vrep::VREP documentation
-   * \param doNotReconnect See vrep::VREP documentation
-   * \param commThreadCycleInMs See vrep::VREP documentation
+   * \param config See VREPSimulationConfiguration
+   *
    */
-  VREPSimulation(mc_control::MCGlobalController & controller, const std::string & host = "127.0.0.1", int port = 19997, int timeout = 3000, bool waitUntilConnected = true, bool doNotReconnect = true, int commThreadCycleInMs = 1);
+  VREPSimulation(mc_control::MCGlobalController & controller, const VREPSimulationConfiguration & config);
 
   /*! \brief Destructor */
   ~VREPSimulation();
