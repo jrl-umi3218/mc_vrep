@@ -40,14 +40,6 @@ namespace
     return true;
   }
 
-  bool set_joint_pos(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream & args)
-  {
-    std::string jn;
-    double v;
-    args >> jn >> v;
-    return controller.set_joint_pos(jn, v);
-  }
-
   bool get_joint_pos(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream & args)
   {
     std::string jn;
@@ -64,18 +56,6 @@ namespace
 
   }
 
-  bool move_com(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream & args)
-  {
-    double x, y, z = 0;
-    args >> x >> y >> z;
-    return controller.move_com(Eigen::Vector3d(x,y,z));
-  }
-
-  bool play_next_stance(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream &)
-  {
-    return controller.play_next_stance();
-  }
-
   bool GoToHalfSitPose(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream &)
   {
     return controller.GoToHalfSitPose_service();
@@ -86,19 +66,6 @@ namespace
     std::string controller_name;
     ss >> controller_name;
     return controller.EnableController(controller_name);
-  }
-
-  bool send_msg(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream & args)
-  {
-    return controller.send_msg(args.str());
-  }
-
-  bool send_recv_msg(mc_control::MCGlobalController & controller, VREPSimulation&, std::stringstream & args)
-  {
-    std::string out;
-    bool r = controller.send_recv_msg(args.str(), out);
-    LOG_INFO("Controller response:" << std::endl << out)
-    return r;
   }
 
   bool set_external_force(mc_control::MCGlobalController&, VREPSimulation& vrep, std::stringstream & args)
@@ -128,18 +95,13 @@ namespace
 
 
   std::map<std::string, std::function<bool(mc_control::MCGlobalController&, VREPSimulation&, std::stringstream&)>> cli_fn = {
-    {"set_joint_pos", std::bind(&set_joint_pos, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
     {"get_joint_pos", std::bind(&get_joint_pos, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3) },
     {"open_grippers", std::bind(&open_grippers, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
     {"close_grippers", std::bind(&close_grippers, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
     {"set_gripper", std::bind(&set_gripper, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
-    {"move_com", std::bind(&move_com, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
-    {"play_next_stance", std::bind(&play_next_stance, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
     {"GoToHalfSitPose", std::bind(&GoToHalfSitPose, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
     {"half_sitting", std::bind(&GoToHalfSitPose, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
     {"enable_controller", std::bind(&EnableController, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
-    {"send_msg", std::bind(&send_msg, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
-    {"send_recv_msg", std::bind(&send_recv_msg, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
     {"set_external_force", std::bind(&set_external_force, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
     {"remove_external_force", std::bind(&remove_external_force, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)},
     {"apply_impact", std::bind(&apply_impact, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)}
