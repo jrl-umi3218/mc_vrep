@@ -2,12 +2,12 @@ variables:
   CI_TOOL: gitlab-ci
   ALLOW_TESTSUITE_FAILURE: "true"
   APT_DEPENDENCIES: "libboost-all-dev libgeos++-dev libgeos-dev libltdl-dev libtasks-qld-dev libmc-rbdyn-urdf-dev"
-  GIT_DEPENDENCIES: "nanomsg/nanomsg git@gite.lirmm.fr:multi-contact/mc_rtc_ros_data git@gite.lirmm.fr:multi-contact/mc_rtc git@gite.lirmm.fr:vrep-utils/vrep-api-wrapper.git"
-  CMAKE_ADDITIONAL_OPTIONS: "-DPYTHON_BINDING=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo"
+  GIT_DEPENDENCIES: "nanomsg/nanomsg humanoid-path-planner/hpp-spline#v4.7.0 jbeder/yaml-cpp git@gite.lirmm.fr:multi-contact/mc_rtc_ros_data git@gite.lirmm.fr:multi-contact/mc_rtc git@gite.lirmm.fr:vrep-utils/vrep-api-wrapper.git"
+  CMAKE_ADDITIONAL_OPTIONS: "-DPYTHON_BINDING=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_PYTHON_INTERFACE:BOOL=OFF -DYAML_BUILD_SHARED_LIBS:BOOL=ON"
   MASTER_PPA: ""
-  VREP_URL: "http://coppeliarobotics.com/files/V-REP_PRO_EDU_V3_3_2_64_Linux.tar.gz"
-  VREP_ARCHIVE: "V-REP_PRO_EDU_V3_3_2_64_Linux.tar.gz"
-  VREP_PATH: "/tmp/V-REP_PRO_EDU_V3_3_2_64_Linux"
+  VREP_URL: "http://coppeliarobotics.com/files/V-REP_PRO_EDU_V3_5_0_Linux.tar.gz"
+  VREP_ARCHIVE: "V-REP_PRO_EDU_V3_5_0_Linux.tar.gz"
+  VREP_PATH: "/tmp/V-REP_PRO_EDU_V3_5_0_Linux"
 
 before_script:
   - git submodule update --quiet --init --recursive
