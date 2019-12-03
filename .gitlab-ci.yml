@@ -5,9 +5,9 @@ variables:
   GIT_DEPENDENCIES: "nanomsg/nanomsg git@gite.lirmm.fr:multi-contact/mc_rtc_ros_data git@gite.lirmm.fr:multi-contact/mc_rtc git@gite.lirmm.fr:vrep-utils/vrep-api-wrapper.git"
   CMAKE_ADDITIONAL_OPTIONS: "-DPYTHON_BINDING=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo"
   MASTER_PPA: ""
-  VREP_URL: "http://coppeliarobotics.com/files/V-REP_PRO_EDU_V3_4_0_64_Linux.tar.gz"
-  VREP_ARCHIVE: "V-REP_PRO_EDU_V3_4_0_64_Linux.tar.gz"
-  VREP_PATH: "/tmp/V-REP_PRO_EDU_V3_4_0_64_Linux"
+  VREP_URL: "http://coppeliarobotics.com/files/V-REP_PRO_EDU_V3_5_0_Linux.tar.gz"
+  VREP_ARCHIVE: "V-REP_PRO_EDU_V3_5_0_Linux.tar.gz"
+  VREP_PATH: "/tmp/V-REP_PRO_EDU_V3_5_0_Linux"
 
 before_script:
   - git submodule update --quiet --init --recursive
