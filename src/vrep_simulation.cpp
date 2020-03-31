@@ -20,6 +20,8 @@ private:
   mc_control::MCGlobalController & controller;
   vrep::VREP vrep;
 
+  const bool velocityControl;
+
   const bool torqueControl;
 
   std::vector<VREPSimulationConfiguration::ExtraRobot> extraRobots;
@@ -47,8 +49,8 @@ private:
   size_t iter = 0;
   size_t frameskip = 1;
 public:
-  VREPSimulationImpl(mc_control::MCGlobalController & controller, bool torqueControl, const std::string & host, int port, int timeout, bool waitUntilConnected, bool doNotReconnect, int commThreadCycleInMs, const std::vector<VREPSimulationConfiguration::ExtraRobot> & extraRobots, double simulationTimestep)
-  : controller(controller), vrep(host, port, timeout, waitUntilConnected, doNotReconnect, commThreadCycleInMs), torqueControl(torqueControl), extraRobots(extraRobots)
+  VREPSimulationImpl(mc_control::MCGlobalController & controller, bool velocityControl, bool torqueControl, const std::string & host, int port, int timeout, bool waitUntilConnected, bool doNotReconnect, int commThreadCycleInMs, const std::vector<VREPSimulationConfiguration::ExtraRobot> & extraRobots, double simulationTimestep)
+  : controller(controller), vrep(host, port, timeout, waitUntilConnected, doNotReconnect, commThreadCycleInMs), velocityControl(velocityControl), torqueControl(torqueControl), extraRobots(extraRobots)
   {
     auto gripperJs = controller.gripperJoints();
     auto gripperActiveJs = controller.gripperActiveJoints();
@@ -359,13 +361,17 @@ public:
         {
           auto & robot = controller.controller().robots().robot(rIdx[i]);
           const auto & suffix = suffixes[i];
-          if(!torqueControl)
+          if(torqueControl)
           {
-            vrep.setRobotTargetConfiguration(robot.mb(), robot.mbc(), suffix);
+            vrep.setRobotTargetTorque(robot.mb(), robot.mbc(), suffix);
+          }
+          else if(velocityControl)
+          {
+            vrep.setRobotTargetVelocity(robot.mb(), robot.mbc(), suffix);
           }
           else
           {
-            vrep.setRobotTargetTorque(robot.mb(), robot.mbc(), suffix);
+            vrep.setRobotTargetConfiguration(robot.mb(), robot.mbc(), suffix);
           }
         }
       }
@@ -386,7 +392,7 @@ public:
 };
 
 VREPSimulation::VREPSimulation(mc_control::MCGlobalController & controller, const VREPSimulationConfiguration & config)
-: impl(new VREPSimulationImpl(controller, config.torqueControl, config.host, config.port, config.timeout, config.waitUntilConnected, config.doNotReconnect, config.commThreadCycleInMs, config.extras, config.simulationTimestep))
+: impl(new VREPSimulationImpl(controller, config.velocityControl, config.torqueControl, config.host, config.port, config.timeout, config.waitUntilConnected, config.doNotReconnect, config.commThreadCycleInMs, config.extras, config.simulationTimestep))
 {
 }
 

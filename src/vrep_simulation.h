@@ -33,6 +33,8 @@ struct VREPSimulationConfiguration
   double simulationTimestep = -1;
   /** If true, run the simulation step by step */
   bool stepByStep = false;
+  /** If true, use joint velocity rather than joint position */
+  bool velocityControl = false;
   /** If true, use computed torques as control input rather than joint position */
   bool torqueControl = false;
   /** Configuration for extra-robots */

@@ -50,7 +50,12 @@ int main(int argc, char * argv[])
     config.simulationTimestep = controller.timestep();
   }
   vrep_c("StepByStep", config.stepByStep);
+  vrep_c("VelocityControl", config.velocityControl);
   vrep_c("TorqueControl", config.torqueControl);
+  if(config.velocityControl && config.torqueControl)
+  {
+    LOG_ERROR_AND_THROW(std::runtime_error, "Only of VelocityControl or TorqueControl must be true")
+  }
   if(vrep_c.has("Extras"))
   {
     auto extras_c = vrep_c("Extras");
