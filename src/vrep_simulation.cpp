@@ -38,10 +38,6 @@ private:
   std::vector<sva::PTransformd> basePoses;
   std::vector<sva::MotionVecd> baseVels;
 
-  /* Gripper related */
-  std::map<std::string, std::vector<size_t>> gripper_in_index;
-  std::map<std::string, std::vector<double>> realGripperQs;
-
   std::map<std::string, sva::ForceVecd> external_force;
   std::map<std::string, sva::ForceVecd> impact_force;
 
@@ -57,25 +53,6 @@ public:
     torqueControl(c.torqueControl),
     extraRobots(c.extras)
   {
-    auto gripperJs = controller.gripperJoints();
-    auto gripperActiveJs = controller.gripperActiveJoints();
-    const auto & ref_joint_order = controller.ref_joint_order();
-    for(const auto & g : gripperActiveJs)
-    {
-      gripper_in_index[g.first] = {};
-      realGripperQs[g.first] = {};
-      for(const auto & jn : g.second)
-      {
-        for(size_t i = 0; i < ref_joint_order.size(); ++i)
-        {
-          if(ref_joint_order[i] == jn)
-          {
-            gripper_in_index[g.first].push_back(i);
-            realGripperQs[g.first].push_back(0.0);
-          }
-        }
-      }
-    }
     auto & ctl = controller.controller();
     auto gui = ctl.gui();
     if(gui)
@@ -338,34 +315,6 @@ public:
       updateData();
       if(controller.run())
       {
-        /*FIXME Gripper control stuff*/
-        auto gripperQs = controller.gripperQ();
-        for(auto & rG : realGripperQs)
-        {
-          const auto & idx = gripper_in_index[rG.first];
-          auto & qs = rG.second;
-          for(size_t i = 0; i < idx.size(); ++i)
-          {
-            qs[i] = jQs[idx[i]];
-          }
-        }
-        controller.setActualGripperQ(realGripperQs);
-
-        auto mbc = controller.robot().mbc();
-        auto gripperJs = controller.gripperJoints();
-        for(const auto & gQ : gripperQs)
-        {
-          const auto & qs = gQ.second;
-          const auto & jns = gripperJs[gQ.first];
-          for(size_t i = 0; i < qs.size(); ++i)
-          {
-            if(controller.robot().hasJoint(jns[i]))
-            {
-              auto idx = controller.robot().jointIndexByName(jns[i]);
-              mbc.q[idx][0] = qs[i];
-            }
-          }
-        }
         for(size_t i = 0; i < rIdx.size(); ++i)
         {
           auto & robot = controller.controller().robots().robot(rIdx[i]);
