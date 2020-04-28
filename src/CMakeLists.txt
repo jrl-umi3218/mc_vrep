@@ -4,7 +4,7 @@
 
 set(mc_vrep_src
   vrep_simulation.cpp
-  mc_vrep_cli.cpp
+  vrep_cli.cpp
   mc_vrep.cpp
 )
 

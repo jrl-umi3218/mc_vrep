@@ -2,7 +2,9 @@
  * Copyright 2015-2019 CNRS-UM LIRMM, CNRS-AIST JRL
  */
 
-#include "mc_vrep_cli.h"
+#include "vrep_cli.h"
+
+#include "vrep_simulation.h"
 
 #include <mc_rtc/logging.h>
 
@@ -108,12 +110,12 @@ namespace
   };
 }
 
-MCVREPCLI::MCVREPCLI(mc_control::MCGlobalController & controller, VREPSimulation& vrep)
-: controller(controller), vrep(vrep)
+VREPCLI::VREPCLI(mc_control::MCGlobalController & controller, VREPSimulation& vrep, bool stepByStep)
+: controller(controller), vrep(vrep), stepByStep_(stepByStep)
 {
 }
 
-void MCVREPCLI::run()
+void VREPCLI::run()
 {
   while(!done_)
   {
@@ -128,7 +130,11 @@ void MCVREPCLI::run()
       LOG_INFO("Stopping simulation")
       done_ = true;
     }
-    else if(token == "next" || token == "n")
+    else if(token == "pause")
+    {
+      toggleStepByStep();
+    }
+    else if(token == "next" || token == "n" || token == "step" || token == "s")
     {
       next_ = true;
     }
@@ -152,17 +158,27 @@ void MCVREPCLI::run()
   }
 }
 
-bool MCVREPCLI::done() const
+bool VREPCLI::done() const
 {
   return done_;
 }
 
-bool MCVREPCLI::next() const
+bool VREPCLI::next() const
 {
   return next_;
 }
 
-void MCVREPCLI::play()
+void VREPCLI::play()
 {
   next_ = false;
+}
+
+void VREPCLI::toggleStepByStep()
+{
+  stepByStep_ = !stepByStep_;
+}
+
+void VREPCLI::nextStep()
+{
+  next_ = true;
 }

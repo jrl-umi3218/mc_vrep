@@ -12,6 +12,8 @@
 #include <mc_control/mc_global_controller.h>
 #include <mc_rtc/config.h>
 
+#include "vrep_cli.h"
+
 struct VREPSimulationImpl;
 
 /** Configuration for the connection to VREP and the simulation */
@@ -31,7 +33,7 @@ struct VREPSimulationConfiguration
   int commThreadCycleInMs = 1;
   /** Simulation timestep, defaults to the controller timestep if not provided */
   double simulationTimestep = -1;
-  /** If true, run the simulation step by step */
+  /** If true, start the simulation step by step */
   bool stepByStep = false;
   /** If true, use joint velocity rather than joint position */
   bool velocityControl = false;
@@ -80,6 +82,9 @@ public:
   /*! Stop the simulation */
   void stopSimulation();
 
+  /*! Update the GUI */
+  void updateGUI();
+
   /*! Apply an external force to a respondable body. The force will be applied at
    * each iteration until it is explicitely removed.
    *
@@ -108,6 +113,8 @@ public:
    */
   bool applyImpact(const std::string& body_respondable, const sva::ForceVecd& impact);
 
+  /*! Access the CLI associated to this simulation instance */
+  VREPCLI & cli();
 private:
   std::unique_ptr<VREPSimulationImpl> impl;
 };

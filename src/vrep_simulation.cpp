@@ -19,6 +19,7 @@ struct VREPSimulationImpl
 private:
   mc_control::MCGlobalController & controller;
   vrep::VREP vrep;
+  VREPCLI cli_;
 
   const bool velocityControl;
 
@@ -49,8 +50,13 @@ private:
   size_t iter = 0;
   size_t frameskip = 1;
 public:
-  VREPSimulationImpl(mc_control::MCGlobalController & controller, bool velocityControl, bool torqueControl, const std::string & host, int port, int timeout, bool waitUntilConnected, bool doNotReconnect, int commThreadCycleInMs, const std::vector<VREPSimulationConfiguration::ExtraRobot> & extraRobots, double simulationTimestep)
-  : controller(controller), vrep(host, port, timeout, waitUntilConnected, doNotReconnect, commThreadCycleInMs), velocityControl(velocityControl), torqueControl(torqueControl), extraRobots(extraRobots)
+  VREPSimulationImpl(VREPSimulation & self, mc_control::MCGlobalController & controller, const VREPSimulationConfiguration & c)
+  : controller(controller),
+    vrep(c.host, c.port, c.timeout, c.waitUntilConnected, c.doNotReconnect, c.commThreadCycleInMs),
+    cli_(controller, self, c.stepByStep),
+    velocityControl(c.velocityControl),
+    torqueControl(c.torqueControl),
+    extraRobots(c.extras)
   {
     auto gripperJs = controller.gripperJoints();
     auto gripperActiveJs = controller.gripperActiveJoints();
@@ -120,10 +126,14 @@ public:
                          )
       );
       gui->addElement({"VREP"},
+                      mc_rtc::gui::Checkbox("Step by step",
+                                            [this]() { return cli_.stepByStep(); },
+                                            [this]() { cli_.toggleStepByStep(); }),
+                      mc_rtc::gui::Button("Next step", [this]() { cli_.nextStep(); }),
                       mc_rtc::gui::Button("Stop", [this](){ stopSimulation(); std::exit(0); }));
     }
 
-    this->simulationTimestep = simulationTimestep;
+    this->simulationTimestep = c.simulationTimestep;
     frameskip = std::round(ctl.timeStep / simulationTimestep);
     LOG_INFO("[mc_vrep] Frameskip: " << frameskip)
   }
@@ -389,10 +399,22 @@ public:
   {
     vrep.stopSimulation();
   }
+
+  void updateGUI()
+  {
+    controller.running = false;
+    controller.run();
+    controller.running = true;
+  }
+
+  VREPCLI & cli()
+  {
+    return cli_;
+  }
 };
 
 VREPSimulation::VREPSimulation(mc_control::MCGlobalController & controller, const VREPSimulationConfiguration & config)
-: impl(new VREPSimulationImpl(controller, config.velocityControl, config.torqueControl, config.host, config.port, config.timeout, config.waitUntilConnected, config.doNotReconnect, config.commThreadCycleInMs, config.extras, config.simulationTimestep))
+: impl(new VREPSimulationImpl(*this, controller, config))
 {
 }
 
@@ -415,6 +437,11 @@ void VREPSimulation::stopSimulation()
   impl->stopSimulation();
 }
 
+void VREPSimulation::updateGUI()
+{
+  impl->updateGUI();
+}
+
 bool VREPSimulation::setExternalForce(const std::string& body_respondable, const sva::ForceVecd& force)
 {
   return impl->setExternalForce(body_respondable, force);
@@ -428,4 +455,9 @@ bool VREPSimulation::removeExternalForce(const std::string& body_respondable)
 bool VREPSimulation::applyImpact(const std::string& body_respondable, const sva::ForceVecd& impact)
 {
   return impl->applyImpact(body_respondable, impact);
+}
+
+VREPCLI & VREPSimulation::cli()
+{
+  return impl->cli();
 }

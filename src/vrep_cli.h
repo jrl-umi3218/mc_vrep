@@ -5,12 +5,13 @@
 #pragma once
 
 #include <mc_control/mc_global_controller.h>
-#include "vrep_simulation.h"
 
-struct MCVREPCLI
+struct VREPSimulation;
+
+struct VREPCLI
 {
 public:
-  MCVREPCLI(mc_control::MCGlobalController & controller, VREPSimulation& vrep);
+  VREPCLI(mc_control::MCGlobalController & controller, VREPSimulation & vrep, bool stepByStep);
 
   void run();
 
@@ -19,9 +20,19 @@ public:
   bool next() const;
 
   void play();
+
+  inline bool stepByStep() const
+  {
+    return stepByStep_;
+  }
+
+  void toggleStepByStep();
+
+  void nextStep();
 private:
   mc_control::MCGlobalController & controller;
   VREPSimulation & vrep;
   bool done_ = false;
   bool next_ = false;
+  bool stepByStep_ = false;
 };
