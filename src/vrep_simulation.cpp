@@ -7,7 +7,6 @@
 #include <vrep-api-wrapper/vrep.h>
 
 #include <mc_rtc/logging.h>
-#include <mc_rtc/ros.h>
 
 #include <array>
 #include <fstream>
