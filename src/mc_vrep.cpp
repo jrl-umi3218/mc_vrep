@@ -3,7 +3,6 @@
  */
 
 #include "vrep_simulation.h"
-#include "mc_vrep_cli.h"
 
 #include <mc_control/mc_global_controller.h>
 #include <mc_rtc/logging.h>
@@ -12,13 +11,16 @@
 #include <iostream>
 #include <thread>
 
-void simThread(VREPSimulation & vrep, MCVREPCLI & cli, bool stepByStep)
+void simThread(VREPSimulation & vrep)
 {
+  auto & cli = vrep.cli();
   while(!cli.done())
   {
     vrep.nextSimulationStep();
-    while(stepByStep && !cli.next() && !cli.done())
+    while(cli.stepByStep() && !cli.next() && !cli.done())
     {
+      vrep.updateGUI();
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     cli.play();
   }
@@ -71,9 +73,9 @@ int main(int argc, char * argv[])
 
   vrep.startSimulation();
 
-  MCVREPCLI cli(controller, vrep);
-  std::thread th(std::bind(&MCVREPCLI::run, &cli));
-  simThread(vrep, cli, config.stepByStep);
+  auto & cli = vrep.cli();
+  std::thread th(std::bind(&VREPCLI::run, &cli));
+  simThread(vrep);
 
   th.join();
   return 0;
