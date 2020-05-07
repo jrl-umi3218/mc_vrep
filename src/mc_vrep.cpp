@@ -6,6 +6,7 @@
 
 #include <mc_control/mc_global_controller.h>
 #include <mc_rtc/logging.h>
+#include <mc_rtc/version.h>
 
 #include <cmath>
 #include <iostream>
@@ -35,6 +36,14 @@ int main(int argc, char * argv[])
   {
     conf_file = argv[1];
   }
+
+  if(mc_rtc::MC_RTC_VERSION != mc_rtc::version())
+  {
+    LOG_ERROR("mc_vrep was compiled with "
+              << mc_rtc::MC_RTC_VERSION << " but mc_rtc is at version " << mc_rtc::version()
+              << ", you might face subtle issues or unexpected crashes, please recompile mc_vrep")
+  }
+
   mc_control::MCGlobalController controller(conf_file);
 
   /* Start the VREP remote API */
