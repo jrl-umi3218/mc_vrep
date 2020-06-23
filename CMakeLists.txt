@@ -16,6 +16,6 @@ enable_language(C)
 project(${PROJECT_NAME})
 
 find_package(vrep-api-wrapper REQUIRED)
-find_package(mc_rtc 1.3.0 REQUIRED)
+find_package(mc_rtc 1.4.0 REQUIRED)
 
 add_subdirectory(src)

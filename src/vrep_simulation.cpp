@@ -111,7 +111,7 @@ public:
 
     this->simulationTimestep = c.simulationTimestep;
     frameskip = std::round(ctl.timeStep / simulationTimestep);
-    LOG_INFO("[mc_vrep] Frameskip: " << frameskip)
+    mc_rtc::log::info("[mc_vrep] Frameskip: {}", frameskip);
   }
 
   typedef sva::ForceVecd wrench_t;
@@ -161,7 +161,7 @@ public:
       }
       if(jName == "" && i == 0)
       {
-        LOG_ERROR_AND_THROW(std::runtime_error, "No 1-dof joints in your main robot, aborting")
+        mc_rtc::log::error_and_throw<std::runtime_error>("No 1-dof joints in your main robot");
       }
       else if(jName == "")
       {
@@ -173,7 +173,7 @@ public:
         {
           baseName = robot.mb().body(0).name();
         }
-        LOG_WARNING("ExtraRobot with index " << i << " cannot be controlled, will only track the base position " << baseName)
+        mc_rtc::log::warning("ExtraRobot with index {} cannot be controlled, will only track the base position {}", i, baseName);
       }
       else
       {
@@ -209,7 +209,7 @@ public:
     }
     updateData();
     controller.init(controller.robot().encoderValues());
-    LOG_SUCCESS("Simulation started")
+    mc_rtc::log::success("Simulation started");
   }
 
   void updateData()

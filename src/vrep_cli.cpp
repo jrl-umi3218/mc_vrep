@@ -127,7 +127,7 @@ void VREPCLI::run()
     ss >> token;
     if(token == "stop")
     {
-      LOG_INFO("Stopping simulation")
+      mc_rtc::log::info("Stopping simulation");
       done_ = true;
     }
     else if(token == "pause")

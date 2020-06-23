@@ -39,9 +39,10 @@ int main(int argc, char * argv[])
 
   if(mc_rtc::MC_RTC_VERSION != mc_rtc::version())
   {
-    LOG_ERROR("mc_vrep was compiled with "
-              << mc_rtc::MC_RTC_VERSION << " but mc_rtc is at version " << mc_rtc::version()
-              << ", you might face subtle issues or unexpected crashes, please recompile mc_vrep")
+    mc_rtc::log::error(
+        "mc_vrep was compiled with {} but mc_rtc is at verison {}, you might "
+        "face subtle issues or unexpected crashes, please recompile mc_vrep",
+        mc_rtc::MC_RTC_VERSION, mc_rtc::version());
   }
 
   mc_control::MCGlobalController controller(conf_file);
@@ -65,7 +66,7 @@ int main(int argc, char * argv[])
   vrep_c("TorqueControl", config.torqueControl);
   if(config.velocityControl && config.torqueControl)
   {
-    LOG_ERROR_AND_THROW(std::runtime_error, "Only of VelocityControl or TorqueControl must be true")
+    mc_rtc::log::error_and_throw<std::runtime_error>("Only one of VelocityControl or TorqueControl must be true");
   }
   if(vrep_c.has("Extras"))
   {
