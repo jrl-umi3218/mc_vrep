@@ -136,7 +136,8 @@ public:
     auto & robots = controller.controller().robots();
     for(size_t i = controller.realRobots().size(); i < robots.size(); ++i)
     {
-      controller.realRobots().robotCopy(robots.robot(i));
+      const auto & robot = robots.robot(i);
+      controller.realRobots().robotCopy(robot, robot.name());
     }
     rIdx.push_back(0);
     suffixes.push_back("");
@@ -233,7 +234,7 @@ public:
       jQi += robot.refJointOrder().size();
       robot.encoderValues(encoders);
       robot.jointTorques(jTorques);
-      controller.setWrenches(rIdx[i], wrenches(robot, suffixes[i]));
+      controller.setWrenches(robot.name(), wrenches(robot, suffixes[i]));
       auto & real_robot = controller.realRobots().robot(rIdx[i]);
       real_robot.encoderValues(encoders);
       if(prevEncoders.size() == 0) { prevEncoders = robot.encoderValues(); }
@@ -261,7 +262,7 @@ public:
       real_robot.posW(basePoses[i]);
       real_robot.forwardVelocity();
     }
-    controller.setSensorAcceleration(accel.data);
+    controller.setSensorLinearAcceleration(accel.data);
   }
 
   bool setExternalForce(const std::string& body_respondable, const sva::ForceVecd& force)
