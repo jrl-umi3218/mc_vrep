@@ -39,10 +39,9 @@ int main(int argc, char * argv[])
 
   if(mc_rtc::MC_RTC_VERSION != mc_rtc::version())
   {
-    mc_rtc::log::error(
-        "mc_vrep was compiled with {} but mc_rtc is at version {}, you might "
-        "face subtle issues or unexpected crashes, please recompile mc_vrep",
-        mc_rtc::MC_RTC_VERSION, mc_rtc::version());
+    mc_rtc::log::error("mc_vrep was compiled with {} but mc_rtc is at version {}, you might "
+                       "face subtle issues or unexpected crashes, please recompile mc_vrep",
+                       mc_rtc::MC_RTC_VERSION, mc_rtc::version());
   }
 
   mc_control::MCGlobalController controller(conf_file);
@@ -79,7 +78,6 @@ int main(int argc, char * argv[])
     }
   }
   VREPSimulation vrep(controller, config);
-
 
   vrep.startSimulation();
 

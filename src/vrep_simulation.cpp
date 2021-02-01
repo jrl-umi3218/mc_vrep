@@ -44,13 +44,14 @@ private:
   double simulationTimestep = 0.005;
   size_t iter = 0;
   size_t frameskip = 1;
+
 public:
-  VREPSimulationImpl(VREPSimulation & self, mc_control::MCGlobalController & controller, const VREPSimulationConfiguration & c)
+  VREPSimulationImpl(VREPSimulation & self,
+                     mc_control::MCGlobalController & controller,
+                     const VREPSimulationConfiguration & c)
   : controller(controller),
     vrep(c.host, c.port, c.timeout, c.waitUntilConnected, c.doNotReconnect, c.commThreadCycleInMs),
-    cli_(controller, self, c.stepByStep),
-    velocityControl(c.velocityControl),
-    torqueControl(c.torqueControl),
+    cli_(controller, self, c.stepByStep), velocityControl(c.velocityControl), torqueControl(c.torqueControl),
     extraRobots(c.extras)
   {
     auto & ctl = controller.controller();
@@ -67,46 +68,40 @@ public:
           vrep_bodies.push(b.name() + "_respondable");
         }
       }
-      gui->addElement({"VREP", "Force"},
-        mc_rtc::gui::Form("Apply force",
-                          [this,gui](const mc_rtc::Configuration & data)
-                          {
-                            std::string body = data("Body");
-                            Eigen::Vector6d force = data("Force");
-                            setExternalForce(body, {force});
-                            gui->addElement({"VREP", "Force"},
-                              mc_rtc::gui::Button("Remove force on " + body,
-                                                  [this,body,gui]()
-                                                  {
-                                                    std::string msg = "removeForce " + body; 
-                                                    removeExternalForce(body);
-                                                    gui->removeElement({"VREP", "Force"}, "Remove force on " + body);
-                                                  }
-                                                  )
-                            );
-                          },
-                          mc_rtc::gui::FormDataComboInput("Body", true, {"VREP", "bodies"}),
-                          mc_rtc::gui::FormArrayInput<Eigen::Vector6d>("Force", true, Eigen::Vector6d::Zero())
-                         )
-        );
+      gui->addElement(
+          {"VREP", "Force"},
+          mc_rtc::gui::Form("Apply force",
+                            [this, gui](const mc_rtc::Configuration & data) {
+                              std::string body = data("Body");
+                              Eigen::Vector6d force = data("Force");
+                              setExternalForce(body, {force});
+                              gui->addElement({"VREP", "Force"},
+                                              mc_rtc::gui::Button("Remove force on " + body, [this, body, gui]() {
+                                                std::string msg = "removeForce " + body;
+                                                removeExternalForce(body);
+                                                gui->removeElement({"VREP", "Force"}, "Remove force on " + body);
+                                              }));
+                            },
+                            mc_rtc::gui::FormDataComboInput("Body", true, {"VREP", "bodies"}),
+                            mc_rtc::gui::FormArrayInput<Eigen::Vector6d>("Force", true, Eigen::Vector6d::Zero())));
       gui->addElement({"VREP", "Impact"},
-        mc_rtc::gui::Form("Apply impact",
-                          [this,gui](const mc_rtc::Configuration & data)
-                          {
+                      mc_rtc::gui::Form(
+                          "Apply impact",
+                          [this, gui](const mc_rtc::Configuration & data) {
                             std::string body = data("Body");
                             Eigen::Vector6d force = data("Force (N.s)");
                             applyImpact(body, {force});
                           },
                           mc_rtc::gui::FormDataComboInput("Body", true, {"VREP", "bodies"}),
-                          mc_rtc::gui::FormArrayInput<Eigen::Vector6d>("Force (N.s)", true, Eigen::Vector6d::Zero())
-                         )
-      );
+                          mc_rtc::gui::FormArrayInput<Eigen::Vector6d>("Force (N.s)", true, Eigen::Vector6d::Zero())));
       gui->addElement({"VREP"},
-                      mc_rtc::gui::Checkbox("Step by step",
-                                            [this]() { return cli_.stepByStep(); },
+                      mc_rtc::gui::Checkbox("Step by step", [this]() { return cli_.stepByStep(); },
                                             [this]() { cli_.toggleStepByStep(); }),
                       mc_rtc::gui::Button("Next step", [this]() { cli_.nextStep(); }),
-                      mc_rtc::gui::Button("Stop", [this](){ stopSimulation(); std::exit(0); }));
+                      mc_rtc::gui::Button("Stop", [this]() {
+                        stopSimulation();
+                        std::exit(0);
+                      }));
     }
 
     this->simulationTimestep = c.simulationTimestep;
@@ -174,7 +169,8 @@ public:
         {
           baseName = robot.mb().body(0).name();
         }
-        mc_rtc::log::warning("ExtraRobot with index {} cannot be controlled, will only track the base position {}", i, baseName);
+        mc_rtc::log::warning("ExtraRobot with index {} cannot be controlled, will only track the base position {}", i,
+                             baseName);
       }
       else
       {
@@ -190,11 +186,9 @@ public:
         joints.push_back(j + suffix);
       }
     }
-    vrep.startSimulation(baseNames,
-                         joints,
-                         fSensors);
+    vrep.startSimulation(baseNames, joints, fSensors);
     /* Run simulation until the data arrives */
-    while(! vrep.getSimulationState(joints, jQs, jTorques, fSensors, accel, gyro, baseNames, basePoses, baseVels))
+    while(!vrep.getSimulationState(joints, jQs, jTorques, fSensors, accel, gyro, baseNames, basePoses, baseVels))
     {
       vrep.nextSimulationStep();
     }
@@ -237,17 +231,14 @@ public:
       controller.setWrenches(robot.name(), wrenches(robot, suffixes[i]));
       auto & real_robot = controller.realRobots().robot(rIdx[i]);
       real_robot.encoderValues(encoders);
-      if(prevEncoders.size() == 0) { prevEncoders = robot.encoderValues(); }
+      if(prevEncoders.size() == 0)
+      {
+        prevEncoders = robot.encoderValues();
+      }
       if(robot.mb().joint(0).type() == rbd::Joint::Type::Free)
       {
-        real_robot.mbc().alpha[0] = {
-          baseVels[i].angular().x(),
-          baseVels[i].angular().y(),
-          baseVels[i].angular().z(),
-          baseVels[i].linear().x(),
-          baseVels[i].linear().y(),
-          baseVels[i].linear().z()
-        };
+        real_robot.mbc().alpha[0] = {baseVels[i].angular().x(), baseVels[i].angular().y(), baseVels[i].angular().z(),
+                                     baseVels[i].linear().x(),  baseVels[i].linear().y(),  baseVels[i].linear().z()};
       }
       for(size_t j = 0; j < robot.refJointOrder().size(); ++j)
       {
@@ -256,7 +247,7 @@ public:
         {
           auto jIndex = robot.jointIndexByName(jN);
           real_robot.mbc().q[jIndex][0] = encoders[j];
-          real_robot.mbc().alpha[jIndex][0] = (encoders[j] - prevEncoders[j])/0.005;
+          real_robot.mbc().alpha[jIndex][0] = (encoders[j] - prevEncoders[j]) / 0.005;
         }
       }
       real_robot.posW(basePoses[i]);
@@ -265,13 +256,13 @@ public:
     controller.setSensorLinearAcceleration(accel.data);
   }
 
-  bool setExternalForce(const std::string& body_respondable, const sva::ForceVecd& force)
+  bool setExternalForce(const std::string & body_respondable, const sva::ForceVecd & force)
   {
     external_force[body_respondable] = force;
     return true;
   }
 
-  bool removeExternalForce(const std::string& body_respondable)
+  bool removeExternalForce(const std::string & body_respondable)
   {
     if(external_force.count(body_respondable))
     {
@@ -281,7 +272,7 @@ public:
     return false;
   }
 
-  bool applyImpact(const std::string& body_respondable, const sva::ForceVecd& impact)
+  bool applyImpact(const std::string & body_respondable, const sva::ForceVecd & impact)
   {
     impact_force[body_respondable] = impact / controller.timestep();
     return true;
@@ -301,13 +292,13 @@ public:
       vrep.getSimulationState(joints, jQs, jTorques, fSensors, accel, gyro, baseNames, basePoses, baseVels);
 
       // Add external forces
-      for(const auto& f : external_force)
+      for(const auto & f : external_force)
       {
         vrep.addForce(f.first, f.second);
       }
 
       // apply impact forces
-      for(const auto& f : impact_force)
+      for(const auto & f : impact_force)
       {
         vrep.addForce(f.first, f.second);
       }
@@ -367,9 +358,7 @@ VREPSimulation::VREPSimulation(mc_control::MCGlobalController & controller, cons
 {
 }
 
-VREPSimulation::~VREPSimulation()
-{
-}
+VREPSimulation::~VREPSimulation() {}
 
 void VREPSimulation::startSimulation()
 {
@@ -391,17 +380,17 @@ void VREPSimulation::updateGUI()
   impl->updateGUI();
 }
 
-bool VREPSimulation::setExternalForce(const std::string& body_respondable, const sva::ForceVecd& force)
+bool VREPSimulation::setExternalForce(const std::string & body_respondable, const sva::ForceVecd & force)
 {
   return impl->setExternalForce(body_respondable, force);
 }
 
-bool VREPSimulation::removeExternalForce(const std::string& body_respondable)
+bool VREPSimulation::removeExternalForce(const std::string & body_respondable)
 {
   return impl->removeExternalForce(body_respondable);
 }
 
-bool VREPSimulation::applyImpact(const std::string& body_respondable, const sva::ForceVecd& impact)
+bool VREPSimulation::applyImpact(const std::string & body_respondable, const sva::ForceVecd & impact)
 {
   return impl->applyImpact(body_respondable, impact);
 }

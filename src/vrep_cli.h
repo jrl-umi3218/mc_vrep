@@ -29,6 +29,7 @@ public:
   void toggleStepByStep();
 
   void nextStep();
+
 private:
   mc_control::MCGlobalController & controller;
   VREPSimulation & vrep;
