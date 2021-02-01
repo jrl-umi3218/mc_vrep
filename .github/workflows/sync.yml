@@ -1,0 +1,21 @@
+name: Sync with GitLab
+
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  sync-with-gitlab:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: recursive
+        if: github.repository == 'jrl-umi3218/mc_vrep'
+      - name: Sync
+        run: |
+          git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gite.lirmm.fr/multi-contact/mc_vrep
+          git push gitlab main:master
+        if: github.repository == 'jrl-umi3218/mc_vrep'

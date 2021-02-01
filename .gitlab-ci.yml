@@ -1,32 +1,15 @@
-variables:
-  CI_TOOL: gitlab-ci
-  ALLOW_TESTSUITE_FAILURE: "true"
-  APT_DEPENDENCIES: "libtinyxml2-dev libboost-all-dev libgeos++-dev libgeos-dev qhull-bin libqhull-dev libltdl-dev"
-  GIT_DEPENDENCIES: "jbeder/yaml-cpp jrl-umi3218/Eigen3ToPython jrl-umi3218/SpaceVecAlg jrl-umi3218/RBDyn jrl-umi3218/eigen-qld git@gite.lirmm.fr:multi-contact/eigen-lssol.git jrl-umi3218/eigen-quadprog jrl-umi3218/sch-core jrl-umi3218/Tasks jrl-umi3218/mc_rbdyn_urdf nanomsg/nanomsg humanoid-path-planner/hpp-spline#v4.8.1 jrl-umi3218/mc_rtc_data jrl-umi3218/mc_rtc git@gite.lirmm.fr:vrep-utils/vrep-api-wrapper.git"
-  CMAKE_ADDITIONAL_OPTIONS: "-DPYTHON_BINDING=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_PYTHON_INTERFACE:BOOL=OFF -DYAML_BUILD_SHARED_LIBS:BOOL=ON"
-  MASTER_PPA: ""
-  VREP_URL: "http://coppeliarobotics.com/files/V-REP_PRO_EDU_V3_5_0_Linux.tar.gz"
-  VREP_ARCHIVE: "V-REP_PRO_EDU_V3_5_0_Linux.tar.gz"
-  VREP_PATH: "/tmp/V-REP_PRO_EDU_V3_5_0_Linux"
-
-before_script:
-  - git submodule update --quiet --init --recursive
-  - add-apt-repository ppa:pierre-gergondet+ppa/multi-contact-unstable && apt-get update && apt-get upgrade cmake libeigen3-dev -qq
-  - pushd .
-  - cd /tmp
-  - wget $VREP_URL
-  - tar xzf $VREP_ARCHIVE
-  - popd
-  - export CMAKE_ADDITIONAL_OPTIONS="${CMAKE_ADDITIONAL_OPTIONS} -DVREP_PATH=${VREP_PATH}"
-  - ./.jrl-ci/run before_install
-
-build_gcc:
-  stage: build
+sync-github:
+  only:
+    refs:
+      - master
+  stage: sync-github
+  before_script: []
   script:
-    - ./.jrl-ci/run build
-    - ./.jrl-ci/run after_success
+    - git checkout -b master origin/master
+    - git remote add github https://gergondet:${GITHUB_TOKEN}@github.com/jrl-umi3218/mc_vrep
+    - git push github master:main
   tags:
-    - GCC
+    - pid, x86_64_linux_abi11
 
 stages:
-  - build
+  - sync-github
