@@ -1,98 +1,72 @@
-What is this?
+mc_vrep is an interface to use [mc_rtc] controllers in [CoppeliaSim].
+
+This works with all versions of [CoppeliaSim] >= 3.3.0 as of this writing.
+
+Overview
 ==
 
-mc\_vrep is a stand-alone executable used to control JRL/IDH robots (HRP-n) in a VREP simulation. The functionalities mimic that of the equivalent program used to control the actual robots so that going from the simulation to the robot requires a minimal effort (at least on the software side).
+The communication with [CoppeliaSim] is handled by [vrep-api-wrapper](https://gite.lirmm.fr/vrep-utils/vrep-api-wrapper) which is required by this project.
 
-This only works with VREP >= 3.3.0. For older version please check the VREP<3.3.0 tag. However, this version is no longer maintained.
+The application launched by the user is mc_vrep with an optional configuration file for the controller (which controller to use, environment to load, etc...).
 
-How does it work?
-==
-
-The infrastructure for this program is as follows:
-Task <--> mc\_rtc <--> mc\_vrep <== vrep-api-wrapper ==> VREP
-
-The communication with VREP is handled by [vrep-api-wrapper](https://gite.lirmm.fr/vrep-utils/vrep-api-wrapper) which is required by this project.
-
-The application launched by the user is mc\_vrep with an optional configuration file for the controller (which controller to use, environment to load, etc...).
-
-The simulation is entirely driven by mc\_vrep, with the following timeline for each time step of the simulation:
-1. Get joints/sensors data from VREP
+The simulation is entirely driven by mc_vrep, with the following timeline for each time step of the simulation:
+1. Get joints/sensors data from [CoppeliaSim]
 2. Compute the control
-3. Send the control result to VREP
+3. Send the control result to [CoppeliaSim]
 
-ATM (2016/08/29), it is possible to communicate with mc\_vrep via a CLI but not more.
+ATM (2016/08/29), it is possible to communicate with mc_vrep via a CLI but not more.
 
 Current limitations (last update: 2016/08/29)
 ==
 
-- the scene has to be loaded manually in VREP and mc\_vrep assumes three things, warnings are emitted if these assumptions are not respected.
-..1. The robot loaded in VREP is the one controlled by mc\_vrep and the joints' names in VREP matches those in the URDF loaded by mc_rtc
-..2. The robot's model in VREP has a base in VREP
-..3. Idem for force sensors (can be fatal for mc\_rtc if some assumptions are made about the force sensors' data)
+The scene has to be loaded manually in [CoppeliaSim] and mc_vrep assumes three things, warnings are emitted if these assumptions are not respected:
 
-How to build/run it?
+1. The robot controlled by mc_vrep is loaded in the scene and the joints' names in [CoppeliaSim] match those in the URDF loaded by [mc_rtc];
+2. The robot's model in [CoppeliaSim] has a base;
+3. The force sensors' names in [CoppeliaSim] match the force sensors' names in [mc_rtc];
+
+Installation guide
 ==
 
-**Note for Windows/MacOS build**
-
-This has not been well tested yet. For MacOS it is recommended to install the dependencies through [Homebrew](http://brew.sh/).
-
-mc\_rtc
+mc_rtc
 --
 
-You need a working installation of mc\_rtc to use mc\_vrep. See the [COMANOID software release page](http://comanoid.cnrs.fr/packages/) for details on installation. This page provides instructions to install mc\_rtc from binary packages (Ubuntu only) as well as from source.
-
-Installation from source (Linux/MacOS)
-----
-
-Once you have cloned the `mc_rtc` repository. Go to the `utils` folder
-located inside and find the file named `build_and_install.sh`. You can
-then edit it to your liking (typically to change `INSTALL_PREFIX`,
-`WITH_ROS_SUPPORT` and `ROS_DISTRO` variables) and simply run:
-
-```
-./build_and_install.sh
-```
-
-The script will take care of installing the required dependencies
-(using `apt` on Linux and `brew` on MacOSX), clone all necessary source
-codes, build and install them. This may take a while.
+Follow [mc_rtc installation guide](https://jrl-umi3218.github.io/mc_rtc/tutorials/introduction/installation-guide.html) for details on installation.
 
 vrep-api-wrapper
 --
 
-You need to install vrep-api-wrapper by hand as VREP is not cleanly packaged on any platform. Please refer to the [project's page](https://gite.lirmm.fr/vrep-utils/vrep-api-wrapper) for detailed instructions on the installation.
+Please refer to the [project's page](https://gite.lirmm.fr/vrep-utils/vrep-api-wrapper) for detailed instructions on the installation. You will have to install [CoppeliaSim] by yourself.
 
-mc\_vrep
+mc_vrep
 --
 
-Once you installed both mc\_rtc and vrep-api-wrapper you should be able to build and install mc\_vrep easily.
+Once you have mc_rtc and vrep-api-wrapper on your system you can build and install mc_vrep easily, using cmake:
 
-The content of `$VREP_INSTALL_FOLDER/remoteApiCOnnections.txt` should look like this (any port is ok of course as long as you reflect the change in `mc_vrep.cpp`):
+```bash
+mkdir build
+cd build
+cmake ../ -DCMAKE_BUILD_TYPE=RelWithDebInfo
+make
+sudo make install
 ```
-portIndex1_port = 19997
-portIndex1_debug = false
-portIndex1_syncSimTrigger = true
-```
 
-Open an environment containing the HRP-n robot you wish to simulate.
+Usage
+==
 
-Finally, run mc\_vrep:
-* `./src/mc_vrep ../etc/mc_vrep.conf` from the build folder for example
+1. Load a [CoppeliaSim] simulation with the robot you wish to control
+2. Configure mc_rtc accordingly (controller and robot selection)
+3. Run the `mc_vrep` command
 
-By default this will start the simulation with a very simple posture controller, you can check that it is working properly by typing commands into the CLI, for example with HRP4:
-* `set_joint_pos NECK_P 0.5` will move the head downwards
-
-To change the robot you are controlling, simply change the `MainRobot` entry in
-the configuration file you provide to the `mc_vrep` executable (e.g. HRP2DRC or
-HRP4).
-
-Finally, to stop the simulation, you should type `stop` into the CLI.
+Inside mc_rtc GUI you can interact with the simulation:
+- stop it;
+- enable/disable step by step mode;
+- when step by step mode is enabled you can also step multiple times into the simulation;
 
 Running with multiple robots
 ==
 
-mc\_vrep supports multiple robots, to enable it add the following entry to your `mc_rtc.yaml` configuration:
+mc_vrep supports multiple robots, to enable it add the following entry to your `mc_rtc.yaml` configuration:
 
 ```yaml
 VREP:
@@ -103,4 +77,33 @@ VREP:
       suffix: "#1"
 ```
 
-This will tell mc\_vrep that robots with index 1 and 2 in your controller are also present in the V-REP scene and can be controlled. Furthermore, the suffix is used by V-REP when multiple robots of the same type are inserted into the scene. In such cases, V-REP will append this suffix to every joints' and links' name in the simulated model so we need to tell mc\_vrep what the suffix is.
+This will tell mc_vrep that robots with index 1 and 2 in your controller are also present in the [CoppeliaSim] scene and can be controlled. Furthermore, the suffix is used by [CoppeliaSim] when multiple robots of the same type are inserted into the scene. In such cases, [CoppeliaSim] will append this suffix to every joints' and links' name in the simulated model so we need to tell mc_vrep what the suffix is.
+
+Simulation settings
+==
+
+The `VREP` section accepts the following parameters related to the simulation:
+
+- `SimulationTimestep`: timestep of the physics engine in the V-REP simulation; by default, `mc_vrep` assumes this is equal to the controller timestep;
+- `StepByStep`: starts the simulation in step by step mode;
+- `VelocityControl`: use the velocity output of mc_rtc to control the robots (default: `false`);
+- `TorqueControl`: use the torque output of mc_rtc to control the robots (default: `false`);
+
+When both `VelocityControl` and `TorqueControl` are false (i.e. in default mode) the robots are controlled via the position output of mc_rtc.
+
+
+Connection options
+==
+
+The `VREP` section accepts the following parameters, they correspond to the default remote API setting for [CoppeliaSim]:
+
+- `Host`: which host to connect to for [CoppeliaSim] remote API (default: `localhost`)
+- `Port`: which port to connect to for [CoppeliaSim] remote API (default: `19997`)
+- `Timeout`: timeout when attempting the connection in milliseconds (default: `3000`)
+- `WaitUntilConnected`: wait until the API is connected (default: `true`)
+- `DoNotReconnect`: do not attempt to reconnect if the connection is lost (default: `true`)
+- `CommThreadCycleInMs`: Remote API thread cycle duration in ms (default: `1`, must be `> 0`)
+
+[mc_rtc]: https://jrl-umi3218.github.io/mc_rtc/
+[CoppeliaSim]: https://www.coppeliarobotics.com/
+[V-REP]: https://www.coppeliarobotics.com/
