@@ -1,0 +1,77 @@
+name: CI of mc_vrep
+
+on:
+  push:
+    paths-ignore:
+      # Changes to those files don't mandate running CI
+      - ".github/workflows/sync.yml"
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+
+  clang-format:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install clang-format-6.0
+      run: |
+        sudo rm -f /etc/apt/sources.list.d/dotnetdev.list /etc/apt/sources.list.d/microsoft-prod.list
+        sudo apt-get -qq update
+        sudo apt-get -qq remove clang-6.0 libclang1-6.0 libclang-common-6.0-dev libllvm6.0
+        sudo apt-get -qq install clang-format-6.0 clang-format
+    - name: Run clang-format-check
+      run: |
+        ./.clang-format-check.sh
+  build:
+    needs: clang-format
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04]
+        compiler: [gcc]
+        build-type: [RelWithDebInfo]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Temporary APT mirrors cleanup
+      run: |
+        set -e
+        sudo rm -f /etc/apt/sources.list.d/dotnetdev.list /etc/apt/sources.list.d/microsoft-prod.list
+    - name: Setup extra APT mirror
+      run: |
+        set -x
+        set -e
+        sudo apt-get install -y apt-transport-https lsb-release ca-certificates gnupg
+        sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key 892EA6EE273707C6495A6FB6220D644C64666806
+        sudo sh -c 'echo "deb https://dl.bintray.com/gergondet/multi-contact-head $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/multi-contact.list'
+        sudo apt update
+    - name: Install mc_rtc
+      uses: jrl-umi3218/github-actions/install-dependencies@master
+      with:
+        compiler: ${{matrix.compiler}}
+        build-type: ${{ matrix.build-type }}
+        ubuntu: |
+          apt: libmc-rtc-dev
+    - name: Install CoppeliaSim
+      run: |
+        cd /tmp
+        wget https://www.coppeliarobotics.com/files/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04.tar.xz
+        tar xJf CoppeliaSim_Edu_V4_1_0_Ubuntu18_04.tar.xz
+        echo "VREP_PATH=/tmp/CoppeliaSim_Edu_V4_1_0_Ubuntu18_04" >> $GITHUB_ENV
+    - name: Install vrep-api-wrapper
+      uses: jrl-umi3218/github-actions/install-dependencies@master
+      with:
+        compiler: ${{ matrix.compiler }}
+        build-type: ${{ matrix.build-type }}
+        github: |
+          - path: https://gite.lirmm.fr/vrep-utils/vrep-api-wrapper
+            options: -DVREP_PATH=${{ env.VREP_PATH }}
+    - name: Build and test
+      uses: jrl-umi3218/github-actions/build-cmake-project@master
+      with:
+        compiler: ${{ matrix.compiler }}
+        build-type: ${{ matrix.build-type }}
